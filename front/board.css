@@ -1,5 +1,40 @@
+:root {
+    --width-line-cross: 8%;
+}
+
 * {
     touch-action: manipulation;
+}
+
+.board__wait .board-table {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: none;
+}
+
+#play {
+    width: 50%;
+    max-width: 300px;
+    position: absolute;
+    top: 20%;
+    width: 100%;
+    height: 50%;
+}
+
+#play div {
+    margin-top: 5%;
+    align-items: center;
+    /* background: none; */
+    /* background-color: aqua; */
+}
+
+#play-link>input {
+    width: 100%;
+}
+
+#play>button {
+    margin-top: 5em;
+    cursor: pointer;
 }
 
 .body {
@@ -51,7 +86,7 @@
 }
 
 .board-cell__miss {
-    background-color: khaki;
+    background-color: rgb(240, 230, 140, 0.5);
 }
 
 .board-cell__miss::after {
@@ -139,10 +174,6 @@
     -ms-transform: rotate(45deg);
     /* Safari and Chrome */
     -webkit-transform: rotate(45deg);
-}
-
-:root {
-    --width-line-cross: 8%;
 }
 
 .cross:before {

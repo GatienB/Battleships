@@ -1,0 +1,44 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+    <title>Battleships</title>
+    <link rel="stylesheet" href="board.css" type="text/css">
+    <script src="board.js"></script>
+    <script src="sockets_manager.js"></script>
+</head>
+
+<body>
+    <div id="flex-container">
+        <div id="board-container">
+        </div>
+        <div id="rival-container" class="board__wait">
+            <div id="play">
+                <div>
+                    <span><strong>Adversaire</strong></span>
+                </div>
+                <div id="play-link">
+                    <div>Copier le lien et l'envoyer</div>
+                    <input type="text" readonly>
+                </div>
+                <button id="" onclick="testWs()">Jouer</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    let board = new Board();
+    board.createBoard();
+    board.createRivalBoard();
+
+    function testWs() {
+        console.log("testWs");
+        wsConnect();
+
+    }
+</script>
+
+</html>

@@ -462,7 +462,7 @@ class Board {
         console.log(JSON.stringify(Board.binaryBoard));
     }
 
-    createRivalBoard() {
+    createRivalBoard(withEvent = false) {
         let container = document.getElementById("rival-container");
         let table = document.createElement("table");
         let tbody = document.createElement("tbody");
@@ -498,7 +498,8 @@ class Board {
                     divcontent.appendChild(divColNb);
                 }
 
-                divcontent.addEventListener("click", onCellRivalClick);
+                if (withEvent)
+                    divcontent.addEventListener("click", Board.OnCellRivalClick);
 
                 td.appendChild(divcontent);
                 row.appendChild(td);
@@ -508,13 +509,12 @@ class Board {
         table.appendChild(tbody);
         container.appendChild(table);
     }
-}
 
-
-function onCellRivalClick(event) {
-    console.log("onCellRivalClick");
-    console.log(event);
-    event.target.removeEventListener("click", onCellRivalClick);
-    let position = { x: event.target.dataset.x, y: event.target.dataset.y };
-    Board.OnRivalAttack(position);
+    static OnCellRivalClick(event) {
+        console.log("OnCellRivalClick");
+        console.log(event);
+        event.target.removeEventListener("click", Board.OnCellRivalClick);
+        let position = { x: event.target.dataset.x, y: event.target.dataset.y };
+        Board.OnRivalAttack(position);
+    }
 }
