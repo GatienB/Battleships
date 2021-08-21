@@ -36,8 +36,8 @@ class Board {
                 td.classList.add("board-cell");
                 let divcontent = document.createElement("div");
                 divcontent.classList.add("board-cell-content");
-                divcontent.addEventListener("dragover", this.onDragOver);
-                divcontent.addEventListener("drop", this.onDrop);
+                divcontent.addEventListener("dragover", Board.OnDragOver);
+                divcontent.addEventListener("drop", Board.OnDrop);
                 divcontent.setAttribute("data-x", i);
                 divcontent.setAttribute("data-y", j);
 
@@ -174,12 +174,12 @@ class Board {
         return positions;
     }
 
-    dragEnd(event) {
-        console.log("---dragEnd---");
+    static OnDragEnd(event) {
+        console.log("---OnDragEnd---");
         Board.SetDraggedItem(null, null, null);
     }
 
-    onDrop(event) {
+    static OnDrop(event) {
         console.log("------- DROP -------");
         let target = event.target;
         if (target.hasAttribute("data-x") && target.hasAttribute("data-y")) {
@@ -236,7 +236,7 @@ class Board {
         }
     }
 
-    onDragOver(event) {
+    static OnDragOver(event) {
         // console.log(event);
         let target = event.target;
         if (target.hasAttribute("data-x") && target.hasAttribute("data-y")) {
@@ -289,8 +289,8 @@ class Board {
         }
     }
 
-    onDragStart(event) {
-        console.log("---onDragStart---");
+    static OnDragStart(event) {
+        console.log("---OnDragStart---");
         console.log(event);
         let target = event.target;
         let positions = Board.GetPositionsFromBoxId(target.id);
@@ -352,10 +352,10 @@ class Board {
         }
     }
 
-    rotate(event) {
+    static Rotate(event) {
         // quand la partie a demarrée et qu on a hit le boat
         // positions = [] car dans boardBinary id == b-XX__hit
-        console.log("--- rotate ---");
+        console.log("--- Rotate ---");
         let target = event.target;
         if (target.parentNode.hasAttribute("data-x") && target.parentNode.hasAttribute("data-y")) {
             console.warn(target.parentNode.getAttribute("data-x"), target.parentNode.getAttribute("data-y"));
@@ -450,9 +450,9 @@ class Board {
             // console.log(rows);
             rows[x].childNodes[y].childNodes[0].appendChild(a);
 
-            a.addEventListener("dragstart", this.onDragStart);
-            a.addEventListener("dragend", this.dragEnd)
-            a.addEventListener("click", this.rotate);
+            a.addEventListener("dragstart", Board.OnDragStart);
+            a.addEventListener("dragend", Board.OnDragEnd)
+            a.addEventListener("click", Board.Rotate);
 
             for (let i = 0; i < positions.length; i++) {
                 const pos = positions[i];
@@ -478,8 +478,6 @@ class Board {
                 let divcontent = document.createElement("div");
                 divcontent.classList.add("board-cell-content");
                 divcontent.classList.add("pointer");
-                // divcontent.addEventListener("dragover", this.onDragOver);
-                // divcontent.addEventListener("drop", this.onDrop);
                 divcontent.setAttribute("data-x", i);
                 divcontent.setAttribute("data-y", j);
 
@@ -516,5 +514,26 @@ class Board {
         event.target.removeEventListener("click", Board.OnCellRivalClick);
         let position = { x: event.target.dataset.x, y: event.target.dataset.y };
         Board.OnRivalAttack(position);
+    }
+
+    removeEventsSelfTable() {
+        let table = document.getElementById("board-table");
+        let boats = table.getElementsByClassName("boat-box");
+        // console.log(cells)
+        for (let i = 0; i < boats.length; i++) {
+            const boat = boats[i];
+            boat.draggable = false;
+            boat.classList.remove("ui-draggable");
+            boat.removeEventListener("dragstart", Board.OnDragStart);
+            boat.removeEventListener("dragend", Board.OnDragEnd);
+            boat.removeEventListener("click", Board.Rotate);
+        }
+
+        let cellsContent = table.getElementsByClassName("board-cell-content");
+        for (let i = 0; i < cellsContent.length; i++) {
+            const cell = cellsContent[i];
+            cell.removeEventListener("dragover", Board.OnDragOver);
+            cell.removeEventListener("drop", Board.OnDrop);
+        }
     }
 }

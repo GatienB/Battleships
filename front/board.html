@@ -34,9 +34,13 @@
     board.createBoard();
     board.createRivalBoard();
 
+    //Todo: refacto Board class
+    // remove static
+
     function testWs() {
+        board.removeEventsSelfTable();
         console.log("testWs");
-        wsConnect();
+        // wsConnect();
 
     }
 </script>
