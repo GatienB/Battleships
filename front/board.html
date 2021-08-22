@@ -11,6 +11,13 @@
 </head>
 
 <body>
+    <header>
+        <div id="logo">Battleships</div>
+        <div id="messages-infos">
+            <div id="message">Place your boats</div>
+        </div>
+
+    </header>
     <div id="flex-container">
         <div id="board-container">
         </div>
@@ -23,26 +30,13 @@
                     <div>Copier le lien et l'envoyer</div>
                     <input type="text" readonly>
                 </div>
-                <button id="" onclick="testWs()">Jouer</button>
+                <!-- <button id="play-button" onclick="play()">Jouer</button> -->
+                <button id="play-button">Jouer</button>
             </div>
         </div>
     </div>
 </body>
 
-<script>
-    let board = new Board();
-    board.createBoard();
-    board.createRivalBoard();
-
-    //Todo: refacto Board class
-    // remove static
-
-    function testWs() {
-        board.removeEventsSelfTable();
-        console.log("testWs");
-        // wsConnect();
-
-    }
-</script>
+<script src="game.js"></script>
 
 </html>

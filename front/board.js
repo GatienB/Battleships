@@ -1,24 +1,28 @@
 class Board {
-    static binaryBoard = [];
-    static draggedItem = {};
+    binaryBoard = [];
+    draggedItem = {};
     constructor() {
         for (let i = 0; i < 10; i++) {
             let row = []
             for (let j = 0; j < 10; j++) {
                 row.push(0);
             }
-            Board.binaryBoard.push(row);
+            this.binaryBoard.push(row);
         }
     }
 
-    static GetBinaryBoard() {
-        return Board.binaryBoard;
+    test() {
+        return "coucou";
     }
-    static GetDraggedItem() {
-        return Board.draggedItem;
+
+    getBinaryBoard() {
+        return this.binaryBoard;
     }
-    static SetDraggedItem(item, position, cellOffset) {
-        Board.draggedItem = { item, position, cellOffset };
+    getDraggedItem() {
+        return this.draggedItem;
+    }
+    setDraggedItem(item, position, cellOffset) {
+        this.draggedItem = { item, position, cellOffset };
     }
 
     createBoard() {
@@ -36,8 +40,8 @@ class Board {
                 td.classList.add("board-cell");
                 let divcontent = document.createElement("div");
                 divcontent.classList.add("board-cell-content");
-                divcontent.addEventListener("dragover", Board.OnDragOver);
-                divcontent.addEventListener("drop", Board.OnDrop);
+                divcontent.addEventListener("dragover", this.onDragOver);
+                divcontent.addEventListener("drop", this.onDrop);
                 divcontent.setAttribute("data-x", i);
                 divcontent.setAttribute("data-y", j);
 
@@ -67,9 +71,9 @@ class Board {
         this.setDefaultBoats()
     }
 
-    static OnRivalAttack(position) {
+    onRivalAttack = (position) => {
         console.log(position);
-        let board = Board.GetBinaryBoard();
+        let board = this.getBinaryBoard();
         let rivalTable = document.getElementById("rival-table");
         let selfTable = document.getElementById("board-table");
         let x = +position.x;
@@ -120,7 +124,7 @@ class Board {
         }
     }
 
-    static OrderByXThenY(positions) {
+    orderByXThenY = (positions) => {
         positions.sort((a, b) => {
             if (a.x < b.x)
                 return -1;
@@ -139,7 +143,7 @@ class Board {
         });
     }
 
-    static GetOrientation(positions) {
+    getOrientation = (positions) => {
         let x, y;
         let isHorizontal = false;
         let isVertical = false;
@@ -161,8 +165,8 @@ class Board {
         }
     }
 
-    static GetPositionsFromBoxId(boxId) {
-        let board = Board.GetBinaryBoard();
+    getPositionsFromBoxId = (boxId) => {
+        let board = this.getBinaryBoard();
         let positions = [];
         for (let i = 0; i < 10; i++) {
             for (let j = 0; j < 10; j++) {
@@ -174,16 +178,43 @@ class Board {
         return positions;
     }
 
-    static OnDragEnd(event) {
-        console.log("---OnDragEnd---");
-        Board.SetDraggedItem(null, null, null);
+    print = (positions, boxIds) => {
+        positions.forEach((v, i) => {
+            console.log(boxIds[i]);
+            v.forEach(p => {
+                console.log(`(${p.x}, ${p.y})`);
+            })
+        })
     }
 
-    static OnDrop(event) {
+    getAllPositions = () => {
+        let board = this.getBinaryBoard();
+        let idsAdded = [];
+        let positions = [];
+        let boxId;
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 10; j++) {
+                boxId = board[i][j];
+                if (boxId !== 0 && !idsAdded.some(id => id === boxId)) {
+                    positions.push(this.getPositionsFromBoxId(boxId));
+                    idsAdded.push(boxId);
+                }
+            }
+        }
+        // Board.print(positions, idsAdded);
+        return positions;
+    }
+
+    onDragEnd = (event) => {
+        console.log("---onDragEnd---");
+        this.setDraggedItem(null, null, null);
+    }
+
+    onDrop = (event) => {
         console.log("------- DROP -------");
         let target = event.target;
         if (target.hasAttribute("data-x") && target.hasAttribute("data-y")) {
-            let draggedItem = Board.GetDraggedItem();
+            let draggedItem = this.getDraggedItem();
             let cellOffset = draggedItem.cellOffset;
             let x = +target.getAttribute("data-x");
             let y = +target.getAttribute("data-y");
@@ -210,7 +241,7 @@ class Board {
                 for (let i = xInitial; i < xInitial + h; i++) {
                     for (let j = yInitial; j < yInitial + w; j++) {
                         if (i >= 0 && i < 10 && j >= 0 && j < 10) {
-                            Board.GetBinaryBoard()[i][j] = 0;
+                            this.getBinaryBoard()[i][j] = 0;
                         } else
                             throw new Error("Out of board range");
                     }
@@ -219,7 +250,7 @@ class Board {
                 for (let i = x; i < x + h; i++) {
                     for (let j = y; j < y + w; j++) {
                         if (i >= 0 && i < 10 && j >= 0 && j < 10) {
-                            Board.GetBinaryBoard()[i][j] = draggedItem.item.id;
+                            this.getBinaryBoard()[i][j] = draggedItem.item.id;
                         } else
                             throw new Error("Out of board range");
                     }
@@ -236,15 +267,15 @@ class Board {
         }
     }
 
-    static OnDragOver(event) {
+    onDragOver = (event) => {
         // console.log(event);
         let target = event.target;
         if (target.hasAttribute("data-x") && target.hasAttribute("data-y")) {
             let x = +target.getAttribute("data-x");
             let y = +target.getAttribute("data-y");
             console.log("init", x, y);
-            let board = Board.GetBinaryBoard();
-            let draggedElmt = Board.GetDraggedItem();
+            let board = this.getBinaryBoard();
+            let draggedElmt = this.getDraggedItem();
             let draggedItem = draggedElmt.item;
             let cellOffset = draggedElmt.cellOffset;
             // console.log(draggedItem);
@@ -289,13 +320,14 @@ class Board {
         }
     }
 
-    static OnDragStart(event) {
-        console.log("---OnDragStart---");
+    onDragStart = (event) => {
+        console.log("---onDragStart---");
+        console.log(this.test());
         console.log(event);
         let target = event.target;
-        let positions = Board.GetPositionsFromBoxId(target.id);
-        let orientation = Board.GetOrientation(positions);
-        Board.OrderByXThenY(positions);
+        let positions = this.getPositionsFromBoxId(target.id);
+        let orientation = this.getOrientation(positions);
+        this.orderByXThenY(positions);
         let cellOffset = 0;
         if (orientation == "H") {
             let cellSize = target.clientWidth / positions.length;
@@ -314,25 +346,25 @@ class Board {
         console.log(event.offsetX, event.offsetY);
         console.log(event.offsetX / target.clientWidth, event.offsetY / target.clientHeight);
         console.log("cellOffset : ", cellOffset);
-        Board.SetDraggedItem(target, { x: +target.parentNode.getAttribute("data-x"), y: +target.parentNode.getAttribute("data-y") }, cellOffset);
+        this.setDraggedItem(target, { x: +target.parentNode.getAttribute("data-x"), y: +target.parentNode.getAttribute("data-y") }, cellOffset);
 
     }
 
-    static ErasePosition(board, positions) {
+    erasePosition = (board, positions) => {
         console.log("--- ErasePosition ---");
         positions.forEach(p => {
             board[p.x][p.y] = 0;
         });
     }
 
-    static SetNewPositions(board, positions, boxId) {
+    setNewPositions = (board, positions, boxId) => {
         console.log("--- SetNewPositions ---");
         positions.forEach(p => {
             board[p.x][p.y] = boxId;
         });
     }
 
-    static SetPaddingFromOrientationAndSize(box, orientation, size) {
+    setPaddingFromOrientationAndSize = (box, orientation, size) => {
         box.style.paddingRight = "1px";
         box.style.paddingBottom = "1px";
         if (orientation == "H") {
@@ -352,22 +384,22 @@ class Board {
         }
     }
 
-    static Rotate(event) {
+    rotate = (event) => {
         // quand la partie a demarrée et qu on a hit le boat
         // positions = [] car dans boardBinary id == b-XX__hit
-        console.log("--- Rotate ---");
+        console.log("--- rotate ---");
         let target = event.target;
         if (target.parentNode.hasAttribute("data-x") && target.parentNode.hasAttribute("data-y")) {
             console.warn(target.parentNode.getAttribute("data-x"), target.parentNode.getAttribute("data-y"));
-            let positions = Board.GetPositionsFromBoxId(target.id);
-            let orientation = Board.GetOrientation(positions);
-            Board.OrderByXThenY(positions);
+            let positions = this.getPositionsFromBoxId(target.id);
+            let orientation = this.getOrientation(positions);
+            this.orderByXThenY(positions);
             let size = positions.length;
-            let board = Board.GetBinaryBoard();
+            let board = this.getBinaryBoard();
             if (orientation == "H") {
                 let isFree = !board.filter((_, i) => i > positions[0].x && i < positions[0].x + size).some(v => v[positions[0].y] != 0);
                 if (positions[0].x + size - 1 < 10 && isFree) {
-                    Board.ErasePosition(board, positions);
+                    this.erasePosition(board, positions);
                     let xInit = positions[0].x;
                     let yInit = positions[0].y;
                     let i = 0;
@@ -376,16 +408,16 @@ class Board {
                         v.y = yInit;
                         i++;
                     });
-                    Board.SetNewPositions(board, positions, target.id);
+                    this.setNewPositions(board, positions, target.id);
                     let h = target.style.height;
                     target.style.height = target.style.width;
                     target.style.width = h;
-                    Board.SetPaddingFromOrientationAndSize(target, "V", size);
+                    this.setPaddingFromOrientationAndSize(target, "V", size);
                 } else { console.error("Can't rotate H --> V"); }
             } else if (orientation == "V") {
                 let isFree = !board[positions[0].x].filter((_, i) => i > positions[0].y && i < positions[0].y + size).some(v => v != 0);
                 if (positions[0].y + size - 1 < 10 && isFree) {
-                    Board.ErasePosition(board, positions);
+                    this.erasePosition(board, positions);
                     let xInit = positions[0].x;
                     let yInit = positions[0].y;
                     let i = 0;
@@ -394,11 +426,11 @@ class Board {
                         v.y = yInit + i;
                         i++;
                     });
-                    Board.SetNewPositions(board, positions, target.id);
+                    this.setNewPositions(board, positions, target.id);
                     let h = target.style.height;
                     target.style.height = target.style.width;
                     target.style.width = h;
-                    Board.SetPaddingFromOrientationAndSize(target, "H", size);
+                    this.setPaddingFromOrientationAndSize(target, "H", size);
                 } else { console.error("Can't rotate V --> H"); }
             }
         }
@@ -423,10 +455,10 @@ class Board {
 
         boats.forEach(positions => {
             // console.log(JSON.stringify(positions));
-            Board.OrderByXThenY(positions);
+            this.orderByXThenY(positions);
             console.log(JSON.stringify(positions));
 
-            let orientation = Board.GetOrientation(positions);
+            let orientation = this.getOrientation(positions);
             console.log(orientation);
             let a = document.createElement("div");
             a.classList.add("boat-box");
@@ -441,7 +473,7 @@ class Board {
                 a.style.height = `${(positions[positions.length - 1].x+1 - positions[0].x) * 2}em`;
             }
 
-            Board.SetPaddingFromOrientationAndSize(a, orientation, positions.length);
+            this.setPaddingFromOrientationAndSize(a, orientation, positions.length);
 
             let x = positions[0].x;
             let y = positions[0].y;
@@ -450,16 +482,16 @@ class Board {
             // console.log(rows);
             rows[x].childNodes[y].childNodes[0].appendChild(a);
 
-            a.addEventListener("dragstart", Board.OnDragStart);
-            a.addEventListener("dragend", Board.OnDragEnd)
-            a.addEventListener("click", Board.Rotate);
+            a.addEventListener("dragstart", this.onDragStart);
+            a.addEventListener("dragend", this.onDragEnd)
+            a.addEventListener("click", this.rotate);
 
             for (let i = 0; i < positions.length; i++) {
                 const pos = positions[i];
-                Board.binaryBoard[pos.x][pos.y] = a.id;
+                this.binaryBoard[pos.x][pos.y] = a.id;
             }
         });
-        console.log(JSON.stringify(Board.binaryBoard));
+        console.log(JSON.stringify(this.binaryBoard));
     }
 
     createRivalBoard(withEvent = false) {
@@ -497,7 +529,7 @@ class Board {
                 }
 
                 if (withEvent)
-                    divcontent.addEventListener("click", Board.OnCellRivalClick);
+                    divcontent.addEventListener("click", this.onCellRivalClick);
 
                 td.appendChild(divcontent);
                 row.appendChild(td);
@@ -508,12 +540,12 @@ class Board {
         container.appendChild(table);
     }
 
-    static OnCellRivalClick(event) {
+    onCellRivalClick = (event) => {
         console.log("OnCellRivalClick");
         console.log(event);
-        event.target.removeEventListener("click", Board.OnCellRivalClick);
+        event.target.removeEventListener("click", this.onCellRivalClick);
         let position = { x: event.target.dataset.x, y: event.target.dataset.y };
-        Board.OnRivalAttack(position);
+        this.onRivalAttack(position);
     }
 
     removeEventsSelfTable() {
@@ -524,16 +556,62 @@ class Board {
             const boat = boats[i];
             boat.draggable = false;
             boat.classList.remove("ui-draggable");
-            boat.removeEventListener("dragstart", Board.OnDragStart);
-            boat.removeEventListener("dragend", Board.OnDragEnd);
-            boat.removeEventListener("click", Board.Rotate);
+            boat.removeEventListener("dragstart", this.onDragStart);
+            boat.removeEventListener("dragend", this.onDragEnd);
+            boat.removeEventListener("click", this.rotate);
         }
 
         let cellsContent = table.getElementsByClassName("board-cell-content");
         for (let i = 0; i < cellsContent.length; i++) {
             const cell = cellsContent[i];
-            cell.removeEventListener("dragover", Board.OnDragOver);
-            cell.removeEventListener("drop", Board.OnDrop);
+            cell.removeEventListener("dragover", this.onDragOver);
+            cell.removeEventListener("drop", this.onDrop);
+        }
+    }
+
+    activateEventsRivalTable() {
+        this.toggleEventsRivalTable();
+    }
+    deactivateEventsRivalTable() {
+        this.toggleEventsRivalTable(true);
+    }
+
+    toggleEventsRivalTable(deactivate = false) {
+        let rivalTable = document.getElementById("rival-table");
+        if (rivalTable) {
+            let cellsContent = rivalTable.getElementsByClassName("board-cell-content");
+            for (let i = 0; i < cellsContent.length; i++) {
+                const cell = cellsContent[i];
+                if (deactivate) {
+                    cell.removeEventListener("click", this.onCellRivalClick);
+                } else {
+                    let classes = cell.parentElement.classList.value.split(" ");
+                    let ignored = ["board-cell__miss", "board-cell__hit"];
+                    if (!classes.some(c => ignored.some(_c => _c == c))) {
+                        cell.addEventListener("click", this.onCellRivalClick);
+                    } else {
+                        console.log(`cell[${i}], hit or miss`);
+                    }
+                }
+            }
+        }
+    }
+
+    setSelfWait(isWaiting) {
+        this.setContainerWait("board-container", isWaiting);
+    }
+    setRivalWait(isWaiting) {
+        this.setContainerWait("rival-container", isWaiting);
+    }
+
+    setContainerWait(containerId, isWaiting) {
+        let container = document.getElementById(containerId);
+        if (container) {
+            if (isWaiting) {
+                container.classList.add("board__wait");
+            } else {
+                container.classList.remove("board__wait");
+            }
         }
     }
 }
