@@ -1,6 +1,7 @@
 class Board {
     binaryBoard = [];
     draggedItem = {};
+    socketManager = null;
     constructor() {
         for (let i = 0; i < 10; i++) {
             let row = []
@@ -467,10 +468,10 @@ class Board {
             a.style.width = "2em";
             a.draggable = true;
             if (orientation == "H") {
-                a.style.width = `${(positions[positions.length - 1].y+1 - positions[0].y) * 2}em`;
+                a.style.width = `${(positions[positions.length - 1].y + 1 - positions[0].y) * 2}em`;
             }
             if (orientation == "V") {
-                a.style.height = `${(positions[positions.length - 1].x+1 - positions[0].x) * 2}em`;
+                a.style.height = `${(positions[positions.length - 1].x + 1 - positions[0].x) * 2}em`;
             }
 
             this.setPaddingFromOrientationAndSize(a, orientation, positions.length);
@@ -540,12 +541,20 @@ class Board {
         container.appendChild(table);
     }
 
+    SetSocketManager(socketManager) {
+        this.socketManager = socketManager;
+    }
+
     onCellRivalClick = (event) => {
         console.log("OnCellRivalClick");
         console.log(event);
         event.target.removeEventListener("click", this.onCellRivalClick);
         let position = { x: event.target.dataset.x, y: event.target.dataset.y };
-        this.onRivalAttack(position);
+        // this.onRivalAttack(position);
+
+        // todo: send attack
+        this.socketManager.sendSelfAttack(position);
+
     }
 
     removeEventsSelfTable() {
@@ -613,5 +622,70 @@ class Board {
                 container.classList.remove("board__wait");
             }
         }
+    }
+
+    // game events
+    onSelfAttackHit(position, boatPositions) {
+        console.log("onSelfAttackHit");
+        let rivalTable = document.getElementById("rival-table");
+        console.log(position);
+        let x = +position.x;
+        let y = +position.y;
+
+        let cross = document.createElement("div");
+        cross.classList.add("cross");
+        let cellsContent = rivalTable.getElementsByClassName("board-cell-content");
+        cellsContent[(x * 10) + y].appendChild(cross);
+        cellsContent[(x * 10) + y].parentElement.classList.add("board-cell__hit");
+
+        if (boatPositions && boatPositions.length > 0) {
+            for (let i = 0; i < boatPositions.length; i++) {
+                let pos = boatPositions[i];
+                cellsContent[(pos.x * 10) + pos.y].parentElement.classList.add("board-cell__done");
+            }
+        }
+    }
+
+    onSelfAttackMiss(position) {
+        console.log("onSelfAttackMiss");
+        let rivalTable = document.getElementById("rival-table");
+        console.log(position);
+        let x = +position.x;
+        let y = +position.y;
+        let cellsContent = rivalTable.getElementsByClassName("board-cell-content");
+        cellsContent[(x * 10) + y].parentElement.classList.add("board-cell__miss");
+    }
+
+    onRivalAttackHit(position, boatPositions) {
+        console.log("onRivalAttackHit");
+        let selfTable = document.getElementById("board-table");
+        console.log(position);
+        let x = +position.x;
+        let y = +position.y;
+
+        console.log("boom");
+        let cross = document.createElement("div");
+        cross.classList.add("cross");
+        let cellsContentSelf = selfTable.getElementsByClassName("board-cell-content");
+        cellsContentSelf[(x * 10) + y].appendChild(cross);
+        cellsContentSelf[(x * 10) + y].parentElement.classList.add("board-cell__hit");
+
+        if (boatPositions && boatPositions.length > 0) {
+            for (let i = 0; i < boatPositions.length; i++) {
+                let pos = boatPositions[i];
+                cellsContentSelf[(pos.x * 10) + pos.y].parentElement.classList.add("board-cell__done");
+            }
+        }
+    }
+
+    onRivalAttackMiss(position) {
+        console.log("onRivalAttackMiss");
+        let selfTable = document.getElementById("board-table");
+        console.log(position);
+        let x = +position.x;
+        let y = +position.y;
+
+        let cellsContentSelf = selfTable.getElementsByClassName("board-cell-content");
+        cellsContentSelf[(x * 10) + y].parentElement.classList.add("board-cell__miss");
     }
 }

@@ -1,25 +1,26 @@
 class SocketManager {
     board;
+    socket;
     constructor(board) {
         this.board = board;
     }
     wsConnect() {
         console.log(this.board.getBinaryBoard());
-        var socket = new WebSocket("ws://localhost:3001");
+        this.socket = new WebSocket("ws://localhost:3001");
 
-        socket.onmessage = (event) => {
+        this.socket.onmessage = (event) => {
             console.log("onMessage");
             console.log(event.data);
             this.handleMessage(event.data);
         }
 
-        socket.onopen = (event) => {
+        this.socket.onopen = (event) => {
             console.log("onOpen");
             console.log(event);
-            socket.send(this.createInitMessage());
+            this.socket.send(this.createInitMessage());
         }
 
-        socket.onclose = function(event) {
+        this.socket.onclose = (event) => {
             console.log("onClose");
             console.log(event);
         }
@@ -56,9 +57,10 @@ class SocketManager {
                 this.board.setRivalWait(false);
                 break;
             default:
-                return;
+                break;
         }
-        document.getElementById("message").innerText = userInfo;
+        if (userInfo)
+            document.getElementById("message").innerText = userInfo;
         this.handleEvents(msg.events)
     }
 
@@ -68,6 +70,47 @@ class SocketManager {
             if (events.gameStart === true) {
                 document.getElementById("play").remove();
             }
+
+            let boat = undefined;
+            if (events.boat != undefined && events.boat.length > 0) {
+                boat = events.boat;
+            }
+            /** TODO */
+            if (events.attackResult) {
+                let res = events.attackResult;
+                let position = { x: res.x, y: res.y };
+                if (res.state == true) {
+                    this.board.onSelfAttackHit(position, boat);
+                } else {
+                    this.board.onSelfAttackMiss(position);
+                }
+            }
+            if (events.rivalAttack) {
+                let res = events.rivalAttack;
+                let position = { x: res.x, y: res.y };
+                if (res.state == true) {
+                    this.board.onRivalAttackHit(position, boat);
+                } else {
+                    this.board.onRivalAttackMiss(position);
+                }
+            }
+
+            if (events.gameResult) {
+                if (events.gameResult == "WIN") {
+                    document.getElementById("message").innerText = "Vous avez gagné !";
+                    document.getElementById("message").style.color = "green";
+                } else if (events.gameResult == "LOST") {
+                    document.getElementById("message").innerText = "Vous avez perdu";
+                    document.getElementById("message").style.color = "red";
+                }
+            }
         }
+    }
+
+    sendSelfAttack(position) {
+        this.socket.send(JSON.stringify({
+            command: "attack",
+            position: position
+        }));
     }
 }

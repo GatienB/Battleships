@@ -19,7 +19,9 @@ class Game {
         document.getElementById("play-button").setAttribute("disabled", true);
         document.getElementById("play-button").removeEventListener("click", play);
         console.log("play");
-        new SocketManager(board).wsConnect();
+        let sManager = new SocketManager(board);
+        board.SetSocketManager(sManager);
+        sManager.wsConnect();
     }
 }
 

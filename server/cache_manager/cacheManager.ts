@@ -88,8 +88,64 @@ export class CacheManager {
         return gameAddedIn;
     }
 
-    private getGameBySocket(socket: WebSocket): Game[] {
+    playerAttacks(socket: WebSocket, position: Position) {
+        let isHit: boolean = null;
+        if (socket && position) {
+            let game: Game[] = this.getGameBySocket(socket);
+            if (game.length == 0) {
+                console.log("playerAttacks: can't find game associated with socket provided");
+            } else if (game.length == 1) {
+                let g = game[0];
+                if (g.IsSocketPlayer1(socket)) {
+                    isHit = g.Player1Attacks(position);
+                } else if (g.IsSocketPlayer2(socket)) {
+                    isHit = g.Player2Attacks(position);
+                } else {
+                    console.log("playerAttacks: Socket not player1 nor player2");
+                }
+            }
+        }
+
+        return isHit;
+    }
+
+    GetBoatPositionsIfSunk(socket: WebSocket, position: Position): Position[] {
+        let boatPositions: Position[] = [];
+        if (socket && position) {
+            let game: Game[] = this.getGameBySocket(socket);
+            if (game.length == 0) {
+                console.log("playerAttacks: can't find game associated with socket provided");
+            } else if (game.length == 1) {
+                let g = game[0];
+                if (g.IsSocketPlayer1(socket)) {
+                    boatPositions = g.GetBoatPositionsIfSunk(false, position);
+                } else if (g.IsSocketPlayer2(socket)) {
+                    boatPositions = g.GetBoatPositionsIfSunk(true, position);
+                } else {
+                    console.log("playerAttacks: Socket not player1 nor player2");
+                }
+            }
+        }
+
+        return boatPositions;
+    }
+
+    getGameBySocket(socket: WebSocket): Game[] {
         return this.games.filter(g => g.GetPlayer1() == socket || g.GetPlayer2() == socket);
+    }
+
+    IsEndGame(socket: WebSocket): boolean {
+        let retValue: boolean = false;
+        let game: Game[] = this.getGameBySocket(socket);
+        if (game.length == 0) {
+            console.log("playerAttacks: can't find game associated with socket provided");
+        } else if (game.length == 1) {
+            let g = game[0];
+            retValue = g.IsWinner(socket);
+        }
+
+        console.log(`IsEndGame: isWinner: ${retValue}`);
+        return retValue;
     }
 }
 
@@ -130,6 +186,18 @@ export class Game {
         return this.player2 == null;
     }
 
+    IsSocketPlayer1(socket: WebSocket): boolean {
+        return this.player1 == socket;
+    }
+
+    IsSocketPlayer2(socket: WebSocket): boolean {
+        return this.player2 == socket;
+    }
+
+    GetRival(socket: WebSocket): WebSocket {
+        return this.player1 == socket ? this.player2 : this.player1;
+    }
+
     IsGameReady(): boolean {
         if (!this.IsPlayer1Null() && !this.IsPlayer2Null()) {
             return true;
@@ -151,29 +219,121 @@ export class Game {
         this.boatsPlayer2 = this.clonePositions(boats);
     }
 
-    BoatPlayer1Hit(position: Position) {
+    Player1Attacks(position: Position) {
         if (!position.isOutOfBounds()) {
-            for (let i = 0; i < this.boatsPlayer1.length; i++) {
-                let positions = this.boatsPlayer1[i];
-                if (positions.some(p => p.x == position.x && p.y == position.y)) {
-                    positions = positions.filter(p => p.x != position.x && p.y != position.y);
+            for (let i = 0; i < this.boatsPlayer2.length; i++) {
+                let positions = this.boatsPlayer2[i];
+                if (positions.some(p => !p.isHit && p.x == position.x && p.y == position.y)) {
+                    let pos = positions.filter(p => !p.isHit && p.x == position.x && p.y == position.y)[0];
+                    pos.isHit = true;
+                    // positions = positions.filter(p => p.x != position.x && p.y != position.y);
                     return true;
                 }
             }
         }
         return false;
     }
-    BoatPlayer2Hit(position: Position) {
+    Player2Attacks(position: Position) {
         if (!position.isOutOfBounds()) {
-            for (let i = 0; i < this.boatsPlayer2.length; i++) {
-                let positions = this.boatsPlayer2[i];
-                if (positions.some(p => p.x == position.x && p.y == position.y)) {
-                    positions = positions.filter(p => p.x != position.x && p.y != position.y);
+            for (let i = 0; i < this.boatsPlayer1.length; i++) {
+                let positions = this.boatsPlayer1[i];
+                if (positions.some(p => !p.isHit && p.x == position.x && p.y == position.y)) {
+                    let pos = positions.filter(p => !p.isHit && p.x == position.x && p.y == position.y)[0];
+                    pos.isHit = true;
+                    // positions = positions.filter(p => p.x != position.x && p.y != position.y);
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    GetBoatPositionsIfSunk(isPlayer1: boolean, position: Position): Position[] {
+        let returnPositions: Position[] = [];
+        let boats: Position[][];
+        if (isPlayer1) {
+            boats = this.boatsPlayer1;
+        }
+        else {
+            boats = this.boatsPlayer2;
+        }
+
+        if (!position.isOutOfBounds()) {
+            for (let i = 0; i < boats.length; i++) {
+                let positions = boats[i];
+                if (positions.some(p => p.x == position.x && p.y == position.y)) {
+                    if (positions.some(p => !p.isHit)) {
+                        break;
+                    }
+                    else {
+                        for (let j = 0; j < positions.length; j++) {
+                            returnPositions.push(positions[j]);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        return returnPositions;
+    }
+
+    IsWinner(socket: WebSocket): boolean {
+        if (this.IsSocketPlayer1(socket)) {
+            let isWinner = true;
+            for (let i = 0; i < this.boatsPlayer2.length; i++) {
+                let positions = this.boatsPlayer2[i];
+                if (positions.some(p => !p.isHit)) {
+                    isWinner = false;
+                    break;
+                }
+            }
+            return isWinner;
+        }
+        else if(this.IsSocketPlayer2(socket)) {
+            let isWinner = true;
+            for (let i = 0; i < this.boatsPlayer1.length; i++) {
+                let positions = this.boatsPlayer1[i];
+                if (positions.some(p => !p.isHit)) {
+                    isWinner = false;
+                    break;
+                }
+            }
+            return isWinner;
+        }
+
+        return false;
+    }
+
+    GetWinner(): string {
+        let winner: string = null;
+        let isWinner: boolean = true;
+        for (let i = 0; i < this.boatsPlayer2.length; i++) {
+            let positions = this.boatsPlayer2[i];
+            if (positions.some(p => !p.isHit)) {
+                isWinner = false;
+                break;
+            }
+        }
+
+        if (isWinner == true) {
+            return "Player1";
+        }
+
+        isWinner = true;
+        for (let i = 0; i < this.boatsPlayer1.length; i++) {
+            let positions = this.boatsPlayer1[i];
+            if (positions.some(p => !p.isHit)) {
+                isWinner = false;
+                break;
+            }
+        }
+        if (isWinner) {
+            return "Player2";
+        }
+
+
+        return winner;
     }
 
     private clonePositions(positions: Position[][]): Position[][] {
@@ -184,13 +344,23 @@ export class Game {
 export class Position {
     x: number;
     y: number;
+    isHit: boolean;
 
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
+        this.isHit = false;
     }
 
     isOutOfBounds() {
-        return this.x < 0 || this.x > 9 || this.y < 0 || this.y > 9;
+        return this.x == null || this.y == null || this.x < 0 || this.x > 9 || this.y < 0 || this.y > 9;
     }
+
+    // setIsHit() {
+    //     this.isHit = true;
+    // }
+
+    // IsHit() {
+    //     return this.isHit;
+    // }
 }
