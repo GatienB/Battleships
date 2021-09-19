@@ -1,12 +1,33 @@
 class SocketManager {
     board;
     socket;
+    game;
     constructor(board) {
         this.board = board;
     }
-    wsConnect() {
+
+    closeSocketSilently() {
+        if (this.socket) {
+            this.socket.onclose = null;
+            this.socket.close();
+            this.socket = null;
+        }
+    }
+
+    wsConnect(game) {
+        this.game = game;
         console.log(this.board.getBinaryBoard());
         this.socket = new WebSocket("ws://localhost:3001");
+
+        /*
+            Todo
+            afficher nb bateaux restants de l autre (et moi aussi)
+            confettis
+
+            Done
+            revoir messages de victoire/defaite
+            bloquer jeu a la fin du jeu
+        */
 
         this.socket.onmessage = (event) => {
             console.log("onMessage");
@@ -23,6 +44,7 @@ class SocketManager {
         this.socket.onclose = (event) => {
             console.log("onClose");
             console.log(event);
+            this.setUserMessage("La connexion avec le serveur a été perdue", "error");
         }
     }
 
@@ -31,7 +53,7 @@ class SocketManager {
         let msg = {
             command: "create",
             boats: JSON.stringify(positions),
-            gameId: 123456
+            gameId: this.game.idGame //123456
         };
         return JSON.stringify(msg);
     }
@@ -40,6 +62,7 @@ class SocketManager {
         let msg = JSON.parse(data);
         console.log(msg);
         let userInfo = null;
+        let dataType = null;
         switch (msg.command) {
             case "wait_for_opponent":
                 userInfo = "En attente de l'adversaire";
@@ -56,11 +79,20 @@ class SocketManager {
                 this.board.setSelfWait(true);
                 this.board.setRivalWait(false);
                 break;
+            case "rival_disconnected":
+                userInfo = msg.message;
+                dataType = "error";
+                this.board.deactivateEventsRivalTable();
+                this.board.setSelfWait(true);
+                this.board.setRivalWait(true);
+                this.closeSocketSilently();
+                break;
             default:
                 break;
         }
-        if (userInfo)
-            document.getElementById("message").innerText = userInfo;
+        if (userInfo) {
+            this.setUserMessage(userInfo, dataType);
+        }
         this.handleEvents(msg.events)
     }
 
@@ -75,7 +107,7 @@ class SocketManager {
             if (events.boat != undefined && events.boat.length > 0) {
                 boat = events.boat;
             }
-            /** TODO */
+
             if (events.attackResult) {
                 let res = events.attackResult;
                 let position = { x: res.x, y: res.y };
@@ -96,21 +128,37 @@ class SocketManager {
             }
 
             if (events.gameResult) {
+                let msg, dataType;
                 if (events.gameResult == "WIN") {
-                    document.getElementById("message").innerText = "Vous avez gagné !";
-                    document.getElementById("message").style.color = "green";
+                    this.board.deactivateEventsRivalTable();
+                    msg = "Vous avez gagné !";
+                    dataType = "win";
+                    this.closeSocketSilently();
                 } else if (events.gameResult == "LOST") {
-                    document.getElementById("message").innerText = "Vous avez perdu";
-                    document.getElementById("message").style.color = "red";
+                    msg = "Vous avez perdu";
+                    dataType = "lost";
+                    this.closeSocketSilently();
+                }
+
+                if (msg && dataType) {
+                    this.setUserMessage(msg, dataType);
                 }
             }
         }
     }
 
     sendSelfAttack(position) {
-        this.socket.send(JSON.stringify({
-            command: "attack",
-            position: position
-        }));
+        if (this.socket) {
+            this.socket.send(JSON.stringify({
+                command: "attack",
+                position: position
+            }));
+        }
+    }
+
+    setUserMessage(message, dataType) {
+        let el = document.getElementById("message-text");
+        el.parentElement.setAttribute("data-type", dataType);
+        el.innerText = message;
     }
 }

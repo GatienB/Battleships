@@ -1,8 +1,10 @@
 import * as WebSocket from "ws";
+import { SocketManager } from "../socket_manager";
 
 export class CacheManager {
     private socketsClients: WebSocket[];
     private games: Game[];
+    private socketManager: SocketManager;
     constructor() {
         this.socketsClients = [];
         this.games = [];
@@ -15,6 +17,19 @@ export class CacheManager {
 
     removeConnection(socket: WebSocket) {
         this.socketsClients = this.socketsClients.filter(s => s != socket);
+        let game = this.getGameBySocket(socket);
+        if (game.length == 0) {
+            console.log("removeConnection: can't find game associated with socket provided");
+        }
+        else if (game.length == 1) {
+            let g = game[0];
+            if (g && !g.GetIsEndGame()) {
+                let rival = g.GetRival(socket);
+                if (rival) {
+                    this.socketManager.SendRivalDisconnected(rival);
+                }
+            }
+        }
         this.removePlayerFromGame(socket);
         console.log(`removeConnection: totalGames[${this.games.length}]`);
         console.log(`removeConnection: totalClients[${this.socketsClients.length}]`);
@@ -147,6 +162,10 @@ export class CacheManager {
         console.log(`IsEndGame: isWinner: ${retValue}`);
         return retValue;
     }
+
+    SetSocketManager(socketManager: SocketManager) {
+        this.socketManager = socketManager;
+    }
 }
 
 
@@ -156,6 +175,7 @@ export class Game {
     private player2: WebSocket;
     private boatsPlayer1: Position[][];
     private boatsPlayer2: Position[][];
+    private isEndGame: boolean;
 
     constructor(id: number) {
         this.id = id;
@@ -217,6 +237,13 @@ export class Game {
     }
     SetBoatsPlayer2(boats: Position[][]) {
         this.boatsPlayer2 = this.clonePositions(boats);
+    }
+
+    GetIsEndGame(): boolean {
+        return this.isEndGame;
+    }
+    SetIsEndGame(val: boolean) {
+        this.isEndGame = val;
     }
 
     Player1Attacks(position: Position) {
@@ -288,9 +315,12 @@ export class Game {
                     break;
                 }
             }
+            if (isWinner) {
+                this.SetIsEndGame(true);
+            }
             return isWinner;
         }
-        else if(this.IsSocketPlayer2(socket)) {
+        else if (this.IsSocketPlayer2(socket)) {
             let isWinner = true;
             for (let i = 0; i < this.boatsPlayer1.length; i++) {
                 let positions = this.boatsPlayer1[i];
@@ -299,42 +329,46 @@ export class Game {
                     break;
                 }
             }
+            if (isWinner) {
+                this.SetIsEndGame(true);
+            }
             return isWinner;
         }
 
         return false;
     }
-
-    GetWinner(): string {
-        let winner: string = null;
-        let isWinner: boolean = true;
-        for (let i = 0; i < this.boatsPlayer2.length; i++) {
-            let positions = this.boatsPlayer2[i];
-            if (positions.some(p => !p.isHit)) {
-                isWinner = false;
-                break;
+    /*
+        GetWinner(): string {
+            let winner: string = null;
+            let isWinner: boolean = true;
+            for (let i = 0; i < this.boatsPlayer2.length; i++) {
+                let positions = this.boatsPlayer2[i];
+                if (positions.some(p => !p.isHit)) {
+                    isWinner = false;
+                    break;
+                }
             }
-        }
-
-        if (isWinner == true) {
-            return "Player1";
-        }
-
-        isWinner = true;
-        for (let i = 0; i < this.boatsPlayer1.length; i++) {
-            let positions = this.boatsPlayer1[i];
-            if (positions.some(p => !p.isHit)) {
-                isWinner = false;
-                break;
+    
+            if (isWinner == true) {
+                return "Player1";
             }
+    
+            isWinner = true;
+            for (let i = 0; i < this.boatsPlayer1.length; i++) {
+                let positions = this.boatsPlayer1[i];
+                if (positions.some(p => !p.isHit)) {
+                    isWinner = false;
+                    break;
+                }
+            }
+            if (isWinner) {
+                return "Player2";
+            }
+    
+    
+            return winner;
         }
-        if (isWinner) {
-            return "Player2";
-        }
-
-
-        return winner;
-    }
+    */
 
     private clonePositions(positions: Position[][]): Position[][] {
         return JSON.parse(JSON.stringify(positions));

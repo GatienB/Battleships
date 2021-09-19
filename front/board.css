@@ -24,12 +24,15 @@
 #play div {
     margin-top: 5%;
     align-items: center;
+    margin-bottom: 2%;
     /* background: none; */
     /* background-color: aqua; */
 }
 
-#play-link>input {
-    width: 100%;
+#play-link>span {
+    border: 1px solid black;
+    padding: 3px;
+    /* background-color: blanchedalmond; */
 }
 
 #play-button {
@@ -214,16 +217,36 @@ header {
     font-size: 1.5rem;
 }
 
-#messages-infos {
+#container-message {
     /* background-color: aqua; */
     width: 100%;
     display: flex;
     justify-content: center;
 }
 
-#messages-infos>#message {
-    /* height: 5rem; */
+#container-message>#message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 3rem;
     width: 50%;
     background-color: rgba(240, 240, 240, 1);
-    text-align: center;
+    padding: 5px 10px;
+}
+
+#container-message>#message[data-type=win] {
+    color: white;
+    background-color: green;
+}
+
+#container-message>#message[data-type=lost],
+#container-message>#message[data-type=error] {
+    color: white;
+    background-color: red;
+}
+
+#container-message>#message>button {
+    align-self: flex-end;
+    cursor: pointer;
 }

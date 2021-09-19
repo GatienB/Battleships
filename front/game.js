@@ -1,17 +1,30 @@
 let board = new Board();
 board.createBoard();
 board.createRivalBoard();
-var game;
 
 document.getElementById("play-button").addEventListener("click", play);
 class Game {
-    gameStarted = false;
-    constructor() {}
+    isGameStarted = false;
+    idGame
+    constructor() {
+        console.log("Game");
+        let div = document.getElementById("play-link");
+        console.log(div);
+        if (div) {
+            let t = div.getElementsByTagName("span")[0].innerText;
+            let reg = t.match(/\/id(\d{6})$/);
+            console.log(reg)
+            if (reg && reg.length > 1) {
+                this.idGame = +reg[1];
+            }
+        }
+        console.log(this.idGame);
+    }
 
     play() {
-        if (this.gameStarted)
+        if (this.isGameStarted)
             return;
-        this.gameStarted = true;
+        this.isGameStarted = true;
         board.removeEventsSelfTable();
         // let t = document.getElementById("board-container");
         // t.classList.add("board__wait");
@@ -21,7 +34,11 @@ class Game {
         console.log("play");
         let sManager = new SocketManager(board);
         board.SetSocketManager(sManager);
-        sManager.wsConnect();
+        sManager.wsConnect(this);
+    }
+
+    _getRandomInt(min = 0, max = 10000) {
+        return Math.floor(min + Math.random() * (max - min));
     }
 }
 
@@ -30,4 +47,11 @@ function play() {
         game = new Game();
         game.play();
     }
+
+    if (!game.isGameStarted) {
+        game.play();
+    }
 }
+
+
+var game = new Game();

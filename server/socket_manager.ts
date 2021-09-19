@@ -8,6 +8,7 @@ export class SocketManager {
     constructor(cacheManager: CacheManager) {
         this.cacheManager = cacheManager;
         this.server = this.initServer();
+        this.cacheManager.SetSocketManager(this);
     }
 
     private initServer(): WebSocket.Server {
@@ -131,5 +132,9 @@ export class SocketManager {
         }
 
         return positions;
+    }
+
+    SendRivalDisconnected(socket: WebSocket) {
+        socket.send(JSON.stringify({ command: "rival_disconnected", message: "L'adversaire est parti" }));
     }
 }

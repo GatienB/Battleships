@@ -552,7 +552,6 @@ class Board {
         let position = { x: event.target.dataset.x, y: event.target.dataset.y };
         // this.onRivalAttack(position);
 
-        // todo: send attack
         this.socketManager.sendSelfAttack(position);
 
     }
