@@ -12,6 +12,19 @@ class SocketManager {
             this.socket.close();
             this.socket = null;
         }
+        this.createPlayAgainButton();
+    }
+
+    createPlayAgainButton() {
+        let msgContainer = document.getElementById("message");
+        if (msgContainer) {
+            let button = document.createElement("button");
+            button.innerText = "Rejouer";
+            button.onclick = () => {
+                location.reload();
+            }
+            msgContainer.appendChild(button);
+        }
     }
 
     wsConnect(game) {
@@ -45,6 +58,7 @@ class SocketManager {
             console.log("onClose");
             console.log(event);
             this.setUserMessage("La connexion avec le serveur a été perdue", "error");
+            this.createPlayAgainButton();
         }
     }
 

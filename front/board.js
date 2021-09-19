@@ -3,6 +3,11 @@ class Board {
     draggedItem = {};
     socketManager = null;
     constructor() {
+        this.initBinaryBoard();
+    }
+
+    initBinaryBoard() {
+        this.binaryBoard = [];
         for (let i = 0; i < 10; i++) {
             let row = []
             for (let j = 0; j < 10; j++) {
@@ -12,12 +17,8 @@ class Board {
         }
     }
 
-    test() {
-        return "coucou";
-    }
-
     getBinaryBoard() {
-        return this.binaryBoard;
+        return JSON.parse(JSON.stringify(this.binaryBoard));
     }
     getDraggedItem() {
         return this.draggedItem;
@@ -74,7 +75,7 @@ class Board {
 
     onRivalAttack = (position) => {
         console.log(position);
-        let board = this.getBinaryBoard();
+        let board = this.binaryBoard;
         let rivalTable = document.getElementById("rival-table");
         let selfTable = document.getElementById("board-table");
         let x = +position.x;
@@ -167,7 +168,7 @@ class Board {
     }
 
     getPositionsFromBoxId = (boxId) => {
-        let board = this.getBinaryBoard();
+        let board = this.binaryBoard;
         let positions = [];
         for (let i = 0; i < 10; i++) {
             for (let j = 0; j < 10; j++) {
@@ -189,7 +190,7 @@ class Board {
     }
 
     getAllPositions = () => {
-        let board = this.getBinaryBoard();
+        let board = this.binaryBoard;
         let idsAdded = [];
         let positions = [];
         let boxId;
@@ -242,7 +243,7 @@ class Board {
                 for (let i = xInitial; i < xInitial + h; i++) {
                     for (let j = yInitial; j < yInitial + w; j++) {
                         if (i >= 0 && i < 10 && j >= 0 && j < 10) {
-                            this.getBinaryBoard()[i][j] = 0;
+                            this.binaryBoard[i][j] = 0;
                         } else
                             throw new Error("Out of board range");
                     }
@@ -251,7 +252,7 @@ class Board {
                 for (let i = x; i < x + h; i++) {
                     for (let j = y; j < y + w; j++) {
                         if (i >= 0 && i < 10 && j >= 0 && j < 10) {
-                            this.getBinaryBoard()[i][j] = draggedItem.item.id;
+                            this.binaryBoard[i][j] = draggedItem.item.id;
                         } else
                             throw new Error("Out of board range");
                     }
@@ -275,7 +276,7 @@ class Board {
             let x = +target.getAttribute("data-x");
             let y = +target.getAttribute("data-y");
             console.log("init", x, y);
-            let board = this.getBinaryBoard();
+            let board = this.binaryBoard;
             let draggedElmt = this.getDraggedItem();
             let draggedItem = draggedElmt.item;
             let cellOffset = draggedElmt.cellOffset;
@@ -323,7 +324,6 @@ class Board {
 
     onDragStart = (event) => {
         console.log("---onDragStart---");
-        console.log(this.test());
         console.log(event);
         let target = event.target;
         let positions = this.getPositionsFromBoxId(target.id);
@@ -396,7 +396,7 @@ class Board {
             let orientation = this.getOrientation(positions);
             this.orderByXThenY(positions);
             let size = positions.length;
-            let board = this.getBinaryBoard();
+            let board = this.binaryBoard;
             if (orientation == "H") {
                 let isFree = !board.filter((_, i) => i > positions[0].x && i < positions[0].x + size).some(v => v[positions[0].y] != 0);
                 if (positions[0].x + size - 1 < 10 && isFree) {
