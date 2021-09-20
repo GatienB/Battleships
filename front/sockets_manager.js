@@ -67,7 +67,8 @@ class SocketManager {
         let msg = {
             command: "create",
             boats: JSON.stringify(positions),
-            gameId: this.game.idGame //123456
+            gameId: this.game.idGame, //123456
+            isIa: this.game.isIaGame
         };
         return JSON.stringify(msg);
     }

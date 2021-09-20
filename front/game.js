@@ -5,8 +5,10 @@ board.createRivalBoard();
 document.getElementById("play-button").addEventListener("click", play);
 class Game {
     isGameStarted = false;
-    idGame
+    idGame;
+    isIaGame;
     constructor() {
+        this.isIaGame = true;
         console.log("Game");
         let div = document.getElementById("play-link");
         console.log(div);

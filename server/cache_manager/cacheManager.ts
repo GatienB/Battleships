@@ -58,7 +58,7 @@ export class CacheManager {
         }
     }
 
-    addPlayerToGame(socket: WebSocket, gameId: number, boats: Position[][]): Game {
+    addPlayerToGame(socket: WebSocket, gameId: number, boats: Position[][], isIaGame: boolean): Game {
         console.log(typeof boats);
         let gameAddedIn: Game = null;
         let game: Game[] = this.games.filter(g => g.GetId() == gameId);
@@ -77,9 +77,10 @@ export class CacheManager {
                 console.log(`addPlayerToGame: adding player1 to game ${gameId}`);
                 gameAddedIn.SetPlayer1(socket);
                 gameAddedIn.SetBoatsPlayer1(boats);
+                gameAddedIn.SetIsIaGame(isIaGame);
                 this.games.push(gameAddedIn);
             }
-            else if (game.length == 1) {
+            else if (game.length == 1 && !game[0].IsIaGame()) {
                 let _game = game[0];
                 console.log(`addPlayerToGame: player1 == null[${_game.IsPlayer1Null()}]`)
                 console.log(`addPlayerToGame: player2 == null[${_game.IsPlayer2Null()}]`)
@@ -103,7 +104,7 @@ export class CacheManager {
         return gameAddedIn;
     }
 
-    playerAttacks(socket: WebSocket, position: Position) {
+    playerAttacks(socket: WebSocket, position: Position): boolean {
         let isHit: boolean = null;
         if (socket && position) {
             let game: Game[] = this.getGameBySocket(socket);
@@ -176,9 +177,12 @@ export class Game {
     private boatsPlayer1: Position[][];
     private boatsPlayer2: Position[][];
     private isEndGame: boolean;
+    private isIaGame: boolean;
+    private iaFreePositions: Position[];
 
     constructor(id: number) {
         this.id = id;
+        this.iaFreePositions = [];
     }
 
     GetId(): number {
@@ -197,6 +201,17 @@ export class Game {
     }
     SetPlayer2(socket: WebSocket) {
         this.player2 = socket;
+    }
+
+    IsIaGame(): boolean {
+        return this.isIaGame;
+    }
+    SetIsIaGame(value: boolean) {
+        if(value === true) {
+            this.generateBoatsPlayer2();
+            this.initIaFreePositionsToPlay()
+        }
+        this.isIaGame = value;
     }
 
     IsPlayer1Null(): boolean {
@@ -337,38 +352,61 @@ export class Game {
 
         return false;
     }
-    /*
-        GetWinner(): string {
-            let winner: string = null;
-            let isWinner: boolean = true;
-            for (let i = 0; i < this.boatsPlayer2.length; i++) {
-                let positions = this.boatsPlayer2[i];
-                if (positions.some(p => !p.isHit)) {
-                    isWinner = false;
-                    break;
-                }
+
+
+    IsIaWinner(): boolean {
+        let isWinner = true;
+        for (let i = 0; i < this.boatsPlayer1.length; i++) {
+            let positions = this.boatsPlayer1[i];
+            if (positions.some(p => !p.isHit)) {
+                isWinner = false;
+                break;
             }
-    
-            if (isWinner == true) {
-                return "Player1";
-            }
-    
-            isWinner = true;
+        }
+        if (isWinner) {
+            this.SetIsEndGame(true);
+        }
+        return isWinner;
+    }
+
+    GetNextIAMove(): Position {
+        let pos: Position;
+        let maxId = this.iaFreePositions.length;
+        let index = Math.floor(Math.random() * maxId);
+        pos = this.iaFreePositions[index];
+        this.iaFreePositions.splice(index, 1);
+        console.log(pos);
+        return pos;
+    }
+
+    IaAttacks(position: Position): boolean {
+        if (!position.isOutOfBounds()) {
             for (let i = 0; i < this.boatsPlayer1.length; i++) {
                 let positions = this.boatsPlayer1[i];
-                if (positions.some(p => !p.isHit)) {
-                    isWinner = false;
-                    break;
+                if (positions.some(p => !p.isHit && p.x == position.x && p.y == position.y)) {
+                    let pos = positions.filter(p => !p.isHit && p.x == position.x && p.y == position.y)[0];
+                    pos.isHit = true;
+                    return true;
                 }
             }
-            if (isWinner) {
-                return "Player2";
-            }
-    
-    
-            return winner;
         }
-    */
+        return false;
+    }
+
+    private generateBoatsPlayer2() {
+        this.boatsPlayer2 = [
+            [new Position(9, 1)]
+        ];
+    }
+
+    private initIaFreePositionsToPlay() {
+        this.iaFreePositions = [];
+        for (let l = 0; l < 10; l++) {
+            for (let c = 0; c < 10; c++) {
+                this.iaFreePositions.push(new Position(l, c));
+            }
+        }
+    }
 
     private clonePositions(positions: Position[][]): Position[][] {
         return JSON.parse(JSON.stringify(positions));

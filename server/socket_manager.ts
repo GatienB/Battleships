@@ -24,13 +24,18 @@ export class SocketManager {
                 let msg = JSON.parse(data.toString());
                 if (msg.command === "create" && msg.gameId && msg.boats) {
                     let boats: Position[][] = this.castTo2nPositionArray(msg.boats);
-                    let game = this.cacheManager.addPlayerToGame(socket, msg.gameId, boats);
+                    let game = this.cacheManager.addPlayerToGame(socket, msg.gameId, boats, msg.isIa);
                     if (game) {
-                        if (game.IsGameReady()) {
-                            this.sendGameStart(game);
+                        if (game.IsIaGame()) {
+                            this.sendGameStart(game, true);
                         }
                         else {
-                            this.sendWaitForOpponent(socket);
+                            if (game.IsGameReady()) {
+                                this.sendGameStart(game);
+                            }
+                            else {
+                                this.sendWaitForOpponent(socket);
+                            }
                         }
                     } else {
                         console.log("No game for this socket");
@@ -47,19 +52,48 @@ export class SocketManager {
                                 // return error
                             }
                             else {
-                                let boatPositions: Position[] = [];
-                                let isWinner: boolean = false;
-                                if (isHit == true) {
-                                    boatPositions = this.cacheManager.GetBoatPositionsIfSunk(socket, position);
-                                    isWinner = this.cacheManager.IsEndGame(socket);
+                                if (g.IsIaGame()) {
+                                    let boatPositions: Position[] = [];
+                                    let isWinner: boolean = false;
+                                    if (isHit == true) {
+                                        boatPositions = this.cacheManager.GetBoatPositionsIfSunk(socket, position);
+                                        isWinner = this.cacheManager.IsEndGame(socket);
+                                    }
+                                    if (isWinner == true) {
+                                        this.sendAttackResult(socket, position, isHit, boatPositions, "WIN");
+                                    } else {
+                                        this.sendAttackResult(socket, position, isHit, boatPositions);
+                                        let pos = g.GetNextIAMove();
+                                        let isIaHits = g.IaAttacks(pos);
+                                        let boatPositionsSunk: Position[] = [];
+                                        let isIaWinner: boolean = false;
+                                        if (isIaHits == true) {
+                                            boatPositionsSunk = g.GetBoatPositionsIfSunk(true, pos);
+                                            isIaWinner = g.IsIaWinner();
+                                        }
+                                        if (isIaWinner == true) {
+                                            this.sendAttackResultToRival(socket, pos, isIaHits, boatPositionsSunk, "LOST");
+                                        } else {
+                                            this.sendAttackResultToRival(socket, pos, isIaHits, boatPositionsSunk);
+                                        }
+
+                                    }
                                 }
-                                let rival = g.GetRival(socket);
-                                if (isWinner == true) {
-                                    this.sendAttackResult(socket, position, isHit, boatPositions, "WIN");
-                                    this.sendAttackResultToRival(rival, position, isHit, boatPositions, "LOST");
-                                } else {
-                                    this.sendAttackResult(socket, position, isHit, boatPositions);
-                                    this.sendAttackResultToRival(rival, position, isHit, boatPositions);
+                                else {
+                                    let boatPositions: Position[] = [];
+                                    let isWinner: boolean = false;
+                                    if (isHit == true) {
+                                        boatPositions = this.cacheManager.GetBoatPositionsIfSunk(socket, position);
+                                        isWinner = this.cacheManager.IsEndGame(socket);
+                                    }
+                                    let rival = g.GetRival(socket);
+                                    if (isWinner == true) {
+                                        this.sendAttackResult(socket, position, isHit, boatPositions, "WIN");
+                                        this.sendAttackResultToRival(rival, position, isHit, boatPositions, "LOST");
+                                    } else {
+                                        this.sendAttackResult(socket, position, isHit, boatPositions);
+                                        this.sendAttackResultToRival(rival, position, isHit, boatPositions);
+                                    }
                                 }
                             }
                         }
@@ -84,9 +118,11 @@ export class SocketManager {
         return server;
     }
 
-    private sendGameStart(game: Game) {
+    private sendGameStart(game: Game, isIaGame: boolean = false) {
         game.GetPlayer1().send(JSON.stringify({ command: "ready", events: { gameStart: true } }));
-        game.GetPlayer2().send(JSON.stringify({ command: "wait", events: { gameStart: true } }));
+        if (!isIaGame) {
+            game.GetPlayer2().send(JSON.stringify({ command: "wait", events: { gameStart: true } }));
+        }
     }
     private sendWaitForOpponent(socket: WebSocket) {
         socket.send(JSON.stringify({ command: "wait_for_opponent" }));
