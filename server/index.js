@@ -19,9 +19,9 @@ app.use("/", express.static(path.join(__dirname, "../front")));
 app.get("/", function(req, res) {
     console.log("/ path");
     let id = generateId();
-    res.redirect(`/id${id}`);
-    // let r = getBoardHtml();
-    // res.send(r);
+    // res.redirect(`/id${id}`);
+    let r = getBoardHtml();
+    res.send(r);
 
     // res.sendFile(path.join(__dirname, "../front/board.html"));
 })
@@ -57,10 +57,14 @@ function getBoardHtml(idGame = 0) {
     let content = fs.readFileSync(path.join(__dirname, "../front/board.html"));
     let contentStr = content.toString();
     let returnStr;
+    const strToReplace = `<span><a>IA</a><a href="/">Ami</a></span>`;
     if (idGame > 0) {
         returnStr = contentStr.replace("<span></span>", `<span>${SERVER_ADDR}/id${idGame}</span>`);
+        returnStr = returnStr.replace(strToReplace, `<span><a href="/">IA</a><a>Ami</a></span>`);
     } else {
-        returnStr = contentStr.replace("<span></span>", `<span>${SERVER_ADDR}/id${generateId()}</span>`);
+        let idGenerated = generateId();
+        returnStr = contentStr.replace("<span></span>", `<span>${SERVER_ADDR}/id${idGenerated}</span>`);
+        returnStr = returnStr.replace(strToReplace, `<span><a>IA</a><a href="/id${idGenerated}">Ami</a></span>`);
     }
     return returnStr;
 }

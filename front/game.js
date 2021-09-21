@@ -8,12 +8,11 @@ class Game {
     idGame;
     isIaGame;
     constructor() {
-        this.isIaGame = true;
         console.log("Game");
         let div = document.getElementById("play-link");
         console.log(div);
         if (div) {
-            let t = div.getElementsByTagName("span")[0].innerText;
+            let t = div.getElementsByTagName("span")[0].innerHTML;
             let reg = t.match(/\/id(\d{6})$/);
             console.log(reg)
             if (reg && reg.length > 1) {
@@ -57,3 +56,17 @@ function play() {
 
 
 var game = new Game();
+let playDiv = document.getElementById("play");
+let isIa = false;
+if (playDiv) {
+    if (playDiv.children[0] && playDiv.children[0].children[1] &&
+        playDiv.children[0].children[1].children[0]) {
+        isIa = playDiv.children[0].children[1].children[0].getAttribute("href") == null;
+    }
+}
+console.log(isIa);
+if (!isIa) {
+    document.getElementById("play-link").classList.remove("invisible");
+} else {
+    game.isIaGame = true;
+}

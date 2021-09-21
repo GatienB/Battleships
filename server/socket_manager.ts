@@ -63,20 +63,24 @@ export class SocketManager {
                                         this.sendAttackResult(socket, position, isHit, boatPositions, "WIN");
                                     } else {
                                         this.sendAttackResult(socket, position, isHit, boatPositions);
-                                        let pos = g.GetNextIAMove();
-                                        let isIaHits = g.IaAttacks(pos);
-                                        let boatPositionsSunk: Position[] = [];
-                                        let isIaWinner: boolean = false;
-                                        if (isIaHits == true) {
-                                            boatPositionsSunk = g.GetBoatPositionsIfSunk(true, pos);
-                                            isIaWinner = g.IsIaWinner();
-                                        }
-                                        if (isIaWinner == true) {
-                                            this.sendAttackResultToRival(socket, pos, isIaHits, boatPositionsSunk, "LOST");
-                                        } else {
-                                            this.sendAttackResultToRival(socket, pos, isIaHits, boatPositionsSunk);
-                                        }
+                                        let isIaToPlay = true;
+                                        while (isIaToPlay) {
+                                            let pos = g.GetNextIAMove();
+                                            let isIaHits = g.IaAttacks(pos);
+                                            let boatPositionsSunk: Position[] = [];
+                                            let isIaWinner: boolean = false;
+                                            if (isIaHits == true) {
+                                                boatPositionsSunk = g.GetBoatPositionsIfSunk(true, pos);
+                                                isIaWinner = g.IsIaWinner();
+                                            }
+                                            if (isIaWinner == true) {
+                                                this.sendAttackResultToRival(socket, pos, isIaHits, boatPositionsSunk, "LOST");
+                                            } else {
+                                                this.sendAttackResultToRival(socket, pos, isIaHits, boatPositionsSunk);
+                                            }
 
+                                            isIaToPlay = isIaHits && !isIaWinner;
+                                        }
                                     }
                                 }
                                 else {
@@ -127,7 +131,7 @@ export class SocketManager {
     private sendWaitForOpponent(socket: WebSocket) {
         socket.send(JSON.stringify({ command: "wait_for_opponent" }));
     }
-    private sendAttackResult(socket: WebSocket, position: Position, success: boolean, boatPositions: Position[], gameResult: string = null) {
+    private sendAttackResult(socket: WebSocket, position: Position, success: boolean, boatPositions: Position[], gameResult: string = undefined) {
         socket.send(JSON.stringify({
             command: success == true ? "ready" : "wait",
             events: {
@@ -139,7 +143,7 @@ export class SocketManager {
             }
         }));
     }
-    private sendAttackResultToRival(socket: WebSocket, position: Position, success: boolean, boatPositions: Position[], gameResult: string = null) {
+    private sendAttackResultToRival(socket: WebSocket, position: Position, success: boolean, boatPositions: Position[], gameResult: string = undefined) {
         socket.send(JSON.stringify({
             command: success == true ? "wait" : "ready",
             events: {
