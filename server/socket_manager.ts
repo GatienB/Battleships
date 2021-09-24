@@ -19,8 +19,12 @@ export class SocketManager {
         server.on('connection', (socket) => {
             this.cacheManager.addNewConnection(socket);
 
+            // todo
+            // ia based on most likely boats positions
+            //            in each game, save boats positions and pick the most likely
+
             // When you receive a message, send that message to every socket.
-            socket.on('message', (data: WebSocket.Data) => {
+            socket.on('message', async (data: WebSocket.Data) => {
                 let msg = JSON.parse(data.toString());
                 if (msg.command === "create" && msg.gameId && msg.boats) {
                     let boats: Position[][] = this.castTo2nPositionArray(msg.boats);
@@ -63,23 +67,26 @@ export class SocketManager {
                                         this.sendAttackResult(socket, position, isHit, boatPositions, "WIN");
                                     } else {
                                         this.sendAttackResult(socket, position, isHit, boatPositions);
-                                        let isIaToPlay = true;
-                                        while (isIaToPlay) {
-                                            let pos = g.GetNextIAMove();
-                                            let isIaHits = g.IaAttacks(pos);
-                                            let boatPositionsSunk: Position[] = [];
-                                            let isIaWinner: boolean = false;
-                                            if (isIaHits == true) {
-                                                boatPositionsSunk = g.GetBoatPositionsIfSunk(true, pos);
-                                                isIaWinner = g.IsIaWinner();
-                                            }
-                                            if (isIaWinner == true) {
-                                                this.sendAttackResultToRival(socket, pos, isIaHits, boatPositionsSunk, "LOST");
-                                            } else {
-                                                this.sendAttackResultToRival(socket, pos, isIaHits, boatPositionsSunk);
-                                            }
+                                        if (!isHit) {
+                                            let isIaToPlay = true;
+                                            while (isIaToPlay) {
+                                                await this.sleep(1000);
+                                                let pos = g.GetNextIAMove();
+                                                let isIaHits = g.IaAttacks(pos);
+                                                let boatPositionsSunk: Position[] = [];
+                                                let isIaWinner: boolean = false;
+                                                if (isIaHits == true) {
+                                                    boatPositionsSunk = g.GetBoatPositionsIfSunk(true, pos);
+                                                    isIaWinner = g.IsIaWinner();
+                                                }
+                                                if (isIaWinner == true) {
+                                                    this.sendAttackResultToRival(socket, pos, isIaHits, boatPositionsSunk, "LOST");
+                                                } else {
+                                                    this.sendAttackResultToRival(socket, pos, isIaHits, boatPositionsSunk);
+                                                }
 
-                                            isIaToPlay = isIaHits && !isIaWinner;
+                                                isIaToPlay = isIaHits && !isIaWinner;
+                                            }
                                         }
                                     }
                                 }
@@ -122,6 +129,11 @@ export class SocketManager {
         return server;
     }
 
+    private sleep(ms: number) {
+        return new Promise((resolve) => {
+            setTimeout(resolve, ms);
+        });
+    }
     private sendGameStart(game: Game, isIaGame: boolean = false) {
         game.GetPlayer1().send(JSON.stringify({ command: "ready", events: { gameStart: true } }));
         if (!isIaGame) {
