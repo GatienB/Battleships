@@ -45,11 +45,11 @@
     margin-top: 5em;
 }
 
-#play-button:not(:disabled) {
+button:not(:disabled) {
     cursor: pointer;
 }
 
-#play-button:disabled {
+button:disabled {
     cursor: not-allowed;
 }
 
@@ -273,4 +273,17 @@ header {
 
 .invisible {
     visibility: hidden;
+}
+
+.board-options {
+    display: block;
+}
+
+.board-options>div {
+    width: 50%;
+    text-align: center;
+}
+
+.board-options>div>button {
+    margin-top: 2rem;
 }

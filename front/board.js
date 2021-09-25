@@ -437,22 +437,32 @@ class Board {
         }
     }
 
-    setDefaultBoats() {
+    setDefaultBoats(_boats = null) {
         let table = document.getElementById("board-table");
         let rows = table.getElementsByTagName("tr");
+        let boats = [];
+        this.initBinaryBoard();
+        let boatsAlreadyHere = Array.from(table.getElementsByClassName("boat-box"));
+        boatsAlreadyHere.forEach(b => {
+            b.parentElement.removeChild(b);
+        })
 
-        let boats = [
-            [{ "y": 5, "x": 4 }, { "y": 5, "x": 6 }, { "y": 5, "x": 7 }, { "y": 5, "x": 5 }],
-            [{ "y": 1, "x": 2 }, { "y": 1, "x": 3 }, { "y": 1, "x": 4 }],
-            [{ "y": 0, "x": 6 }, { "y": 1, "x": 6 }, { "y": 2, "x": 6 }],
-            [{ "y": 8, "x": 6 }, { "y": 9, "x": 6 }],
-            [{ "y": 5, "x": 0 }, { "y": 5, "x": 1 }],
-            [{ "y": 7, "x": 1 }, { "y": 7, "x": 2 }],
-            [{ "y": 7, "x": 8 }],
-            [{ "y": 3, "x": 3 }],
-            [{ "y": 1, "x": 0 }],
-            [{ "y": 1, "x": 9 }]
-        ];
+        if (_boats == null || _boats.length <= 0) {
+            boats = [
+                [{ "y": 5, "x": 4 }, { "y": 5, "x": 6 }, { "y": 5, "x": 7 }, { "y": 5, "x": 5 }],
+                [{ "y": 1, "x": 2 }, { "y": 1, "x": 3 }, { "y": 1, "x": 4 }],
+                [{ "y": 0, "x": 6 }, { "y": 1, "x": 6 }, { "y": 2, "x": 6 }],
+                [{ "y": 8, "x": 6 }, { "y": 9, "x": 6 }],
+                [{ "y": 5, "x": 0 }, { "y": 5, "x": 1 }],
+                [{ "y": 7, "x": 1 }, { "y": 7, "x": 2 }],
+                [{ "y": 7, "x": 8 }],
+                [{ "y": 3, "x": 3 }],
+                [{ "y": 1, "x": 0 }],
+                [{ "y": 1, "x": 9 }]
+            ];
+        } else {
+            boats = _boats;
+        }
 
         boats.forEach(positions => {
             // console.log(JSON.stringify(positions));
@@ -705,5 +715,120 @@ class Board {
                 }
             }
         }
+    }
+
+    randomizeBoats() {
+        /*
+            Number | Size
+                2     4
+                1     3
+                3     2
+                4     1   
+        */
+        const TOTAL_BOATS = 10;
+        let BOATS_SETTINGS = [
+            { boatSize: 4, count: 1 },
+            { boatSize: 3, count: 2 },
+            { boatSize: 2, count: 3 },
+            { boatSize: 1, count: 4 },
+        ]
+
+        let _freePositions = this._initFreePositionsToPlay();
+        let boatsPlayer = [];
+        for (const key in BOATS_SETTINGS) {
+            const setting = BOATS_SETTINGS[key];
+            for (let c = 0; c < setting.count; c++) {
+                let isOk = false;
+                let positions = [];
+                while (!isOk) {
+                    let orientation = this._getRandomNumber(0, 2);
+                    let initialPos = this._getRandomPositionInFreePositions(_freePositions);
+                    positions = this._getFreePositionsFromPosInit(initialPos, orientation, setting.boatSize, _freePositions);
+                    if (positions.length == setting.boatSize) {
+                        positions.forEach(p => {
+                            let index = _freePositions.indexOf(p);
+                            if (index >= 0) {
+                                _freePositions.splice(index, 1);
+                            } else {
+                                throw Error("Index < 0, pas normal");
+                            }
+                        });
+                        isOk = true;
+                    }
+                }
+                boatsPlayer.push(positions);
+            }
+        }
+        console.log(boatsPlayer);
+        this.setDefaultBoats(boatsPlayer);
+    }
+
+    _getFreePositionsFromPosInit(positionInit, orientation, size, freePositions) {
+        let positionsList = [positionInit];
+        if (orientation === 0) {
+            // H
+            for (let y = positionInit.y + 1; y < 10; y++) {
+                let posFree = freePositions.filter(p => p.x == positionInit.x && p.y == y)[0];
+                if (posFree && positionsList.length < size) {
+                    positionsList.push(posFree);
+                } else {
+                    break;
+                }
+            }
+            if (positionsList.length < size) {
+                for (let y = positionInit.y - 1; y > 0; y--) {
+                    let posFree = freePositions.filter(p => p.x == positionInit.x && p.y == y)[0];
+                    if (posFree && positionsList.length < size) {
+                        positionsList.push(posFree);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        } else {
+            // V
+            for (let x = positionInit.x + 1; x < 10; x++) {
+                let posFree = freePositions.filter(p => p.x == x && p.y == positionInit.y)[0];
+                if (posFree && positionsList.length < size) {
+                    positionsList.push(posFree);
+                } else {
+                    break;
+                }
+            }
+            if (positionsList.length < size) {
+                for (let x = positionInit.x - 1; x > 0; x--) {
+                    let posFree = freePositions.filter(p => p.x == x && p.y == positionInit.y)[0];
+                    if (posFree && positionsList.length < size) {
+                        positionsList.push(posFree);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return positionsList;
+    }
+
+    _getRandomPositionInFreePositions(_freePositions, removeFromList = false) {
+        let maxId = _freePositions.length;
+        let index = this._getRandomNumber(0, maxId);
+        let pos = _freePositions[index];
+        if (removeFromList && index >= 0) {
+            _freePositions.splice(index, 1);
+        }
+        return pos;
+    }
+    _initFreePositionsToPlay() {
+        let freePositions = [];
+        for (let l = 0; l < 10; l++) {
+            for (let c = 0; c < 10; c++) {
+                freePositions.push({ x: l, y: c });
+            }
+        }
+        return freePositions;
+    }
+    _getRandomNumber(min, max) {
+        return Math.floor(min + Math.random() * (max - min));
     }
 }

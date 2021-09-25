@@ -32,6 +32,7 @@ class Game {
         board.setSelfWait(true);
         document.getElementById("play-button").setAttribute("disabled", true);
         document.getElementById("play-button").removeEventListener("click", play);
+        document.getElementsByTagName("body")[0].removeChild(document.getElementsByClassName("board-options")[0]);
         console.log("play");
         let sManager = new SocketManager(board);
         board.SetSocketManager(sManager);
@@ -69,4 +70,9 @@ if (!isIa) {
     document.getElementById("play-link").classList.remove("invisible");
 } else {
     game.isIaGame = true;
+}
+
+let btn = document.getElementById("randomize-btn");
+if (btn) {
+    btn.onclick = () => { board.randomizeBoats(); };
 }
