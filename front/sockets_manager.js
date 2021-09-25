@@ -34,12 +34,12 @@ class SocketManager {
 
         /*
             Todo
-            afficher nb bateaux restants de l autre (et moi aussi)
             confettis
-
+            
             Done
             revoir messages de victoire/defaite
             bloquer jeu a la fin du jeu
+            afficher nb bateaux restants de l autre (et moi aussi)
         */
 
         this.socket.onmessage = (event) => {
@@ -67,7 +67,7 @@ class SocketManager {
         let msg = {
             command: "create",
             boats: JSON.stringify(positions),
-            gameId: this.game.idGame, //123456
+            gameId: this.game.idGame,
             isIa: this.game.isIaGame
         };
         return JSON.stringify(msg);
@@ -116,6 +116,10 @@ class SocketManager {
             console.log(events);
             if (events.gameStart === true) {
                 document.getElementById("play").remove();
+                let boatsStats = Array.from(document.getElementsByClassName("boats-stats"));
+                boatsStats.forEach(elmt => {
+                    elmt.classList.remove("invisible");
+                });
             }
 
             let boat = undefined;

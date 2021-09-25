@@ -526,8 +526,8 @@ export class Game {
         */
         const TOTAL_BOATS = 10;
         let BOATS_SETTINGS = [
-            { boatSize: 4, count: 2 },
-            { boatSize: 3, count: 1 },
+            { boatSize: 4, count: 1 },
+            { boatSize: 3, count: 2 },
             { boatSize: 2, count: 3 },
             { boatSize: 1, count: 4 },
         ]

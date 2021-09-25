@@ -22,8 +22,7 @@ export class SocketManager {
             // todo
             // ia based on most likely boats positions
             //            in each game, save boats positions and pick the most likely
-
-            // When you receive a message, send that message to every socket.
+            
             socket.on('message', async (data: WebSocket.Data) => {
                 let msg = JSON.parse(data.toString());
                 if (msg.command === "create" && msg.gameId && msg.boats) {

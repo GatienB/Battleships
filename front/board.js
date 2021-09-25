@@ -444,7 +444,7 @@ class Board {
         let boats = [
             [{ "y": 5, "x": 4 }, { "y": 5, "x": 6 }, { "y": 5, "x": 7 }, { "y": 5, "x": 5 }],
             [{ "y": 1, "x": 2 }, { "y": 1, "x": 3 }, { "y": 1, "x": 4 }],
-            [{ "y": 0, "x": 6 }, { "y": 1, "x": 6 }, { "y": 2, "x": 6 }, { "y": 3, "x": 6 }],
+            [{ "y": 0, "x": 6 }, { "y": 1, "x": 6 }, { "y": 2, "x": 6 }],
             [{ "y": 8, "x": 6 }, { "y": 9, "x": 6 }],
             [{ "y": 5, "x": 0 }, { "y": 5, "x": 1 }],
             [{ "y": 7, "x": 1 }, { "y": 7, "x": 2 }],
@@ -538,7 +538,7 @@ class Board {
             tbody.appendChild(row);
         }
         table.appendChild(tbody);
-        container.appendChild(table);
+        container.prepend(table);
     }
 
     SetSocketManager(socketManager) {
@@ -642,6 +642,7 @@ class Board {
                 let pos = boatPositions[i];
                 cellsContent[(pos.x * 10) + pos.y].parentElement.classList.add("board-cell__done");
             }
+            this.setBoatStatsSunk("rival-container", boatPositions.length);
         }
     }
 
@@ -674,6 +675,7 @@ class Board {
                 let pos = boatPositions[i];
                 cellsContentSelf[(pos.x * 10) + pos.y].parentElement.classList.add("board-cell__done");
             }
+            this.setBoatStatsSunk("board-container", boatPositions.length);
         }
     }
 
@@ -686,5 +688,22 @@ class Board {
 
         let cellsContentSelf = selfTable.getElementsByClassName("board-cell-content");
         cellsContentSelf[(x * 10) + y].parentElement.classList.add("board-cell__miss");
+    }
+
+    setBoatStatsSunk(containerId, boatSize) {
+        let container = document.getElementById(containerId);
+        if (container) {
+            let boatStats = container.getElementsByClassName("boats-stats")[0];
+            if (boatStats) {
+                let boatTypeBySize = boatStats.getElementsByClassName(`boat-type__len${boatSize}`)[0];
+                if (boatTypeBySize) {
+                    let children = Array.from(boatTypeBySize.children);
+                    let boats = children.filter(child => ![...child.classList].some(cl => cl == "sunk"));
+                    if (boats.length > 0) {
+                        boats[0].classList.add("sunk");
+                    }
+                }
+            }
+        }
     }
 }
