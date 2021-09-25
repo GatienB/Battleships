@@ -148,7 +148,7 @@ body {
     content: "";
     position: absolute;
     top: 0;
-    left: -1;
+    left: -1px;
     width: 2em;
     height: 2em;
     border: 2px solid red;
