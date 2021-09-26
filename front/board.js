@@ -238,6 +238,7 @@ class Board {
                         x = x - cellOffset;
                     }
                 }
+                let newId = `b-${x}${y}`;
                 console.log("w,h", w, h);
                 console.log("xInit,yInit", xInitial, yInitial);
                 for (let i = xInitial; i < xInitial + h; i++) {
@@ -252,7 +253,7 @@ class Board {
                 for (let i = x; i < x + h; i++) {
                     for (let j = y; j < y + w; j++) {
                         if (i >= 0 && i < 10 && j >= 0 && j < 10) {
-                            this.binaryBoard[i][j] = draggedItem.item.id;
+                            this.binaryBoard[i][j] = newId; //draggedItem.item.id;
                         } else
                             throw new Error("Out of board range");
                     }
@@ -264,13 +265,96 @@ class Board {
                 } else {
                     target.appendChild(draggedItem.item);
                 }
+                draggedItem.item.id = newId;
                 event.preventDefault();
+            }
+        } else if (Array.from(target.classList).some(c => c == "boat-box") && target.id) {
+            console.log("boatbox");
+            let coord = target.id.match(/^b-(\d{2})$/);
+            if (coord && coord.length > 1) {
+                let x = +coord[1][0];
+                let y = +coord[1][1];
+
+                let positions = this.getPositionsFromBoxId(target.id);
+                let orientation = this.getOrientation(positions);
+                this.orderByXThenY(positions);
+                let offsetDropFromInit = 0;
+                if (orientation == "H") {
+                    let cellSize = target.clientWidth / positions.length;
+                    offsetDropFromInit = event.offsetX / cellSize;
+                } else if (orientation == "V") {
+                    let cellSize = target.clientHeight / positions.length;
+                    offsetDropFromInit = event.offsetY / cellSize;
+                }
+                if (offsetDropFromInit >= positions.length)
+                    offsetDropFromInit = positions.length - 1;
+                else if (offsetDropFromInit < 0) {
+                    offsetDropFromInit = 0;
+                }
+                offsetDropFromInit = Math.trunc(offsetDropFromInit);
+                if (orientation == "H") {
+                    y += offsetDropFromInit;
+                } else if (orientation == "V") {
+                    x += offsetDropFromInit;
+                }
+
+                let draggedItem = this.getDraggedItem();
+                let cellOffset = draggedItem.cellOffset;
+                console.log(cellOffset);
+                let xInitial = draggedItem.position.x;
+                let yInitial = draggedItem.position.y;
+                let w = +draggedItem.item.style.width.replace("em", "");
+                let h = +draggedItem.item.style.height.replace("em", "");
+                if (w > 0 && h > 0) {
+                    w = w / 2;
+                    h = h / 2;
+                    if (cellOffset > 0) {
+                        if (w > h) {
+                            // H
+                            y = y - cellOffset;
+                        } else if (w < h) {
+                            // V
+                            x = x - cellOffset;
+                        }
+                    }
+                    let newId = `b-${x}${y}`;
+                    console.log("w,h", w, h);
+                    console.log("xInit,yInit", xInitial, yInitial);
+                    for (let i = xInitial; i < xInitial + h; i++) {
+                        for (let j = yInitial; j < yInitial + w; j++) {
+                            if (i >= 0 && i < 10 && j >= 0 && j < 10) {
+                                this.binaryBoard[i][j] = 0;
+                            } else
+                                throw new Error("Out of board range");
+                        }
+                    }
+                    console.log("new x, new y", x, y);
+                    for (let i = x; i < x + h; i++) {
+                        for (let j = y; j < y + w; j++) {
+                            if (i >= 0 && i < 10 && j >= 0 && j < 10) {
+                                this.binaryBoard[i][j] = newId; //draggedItem.item.id;
+                            } else
+                                throw new Error("Out of board range");
+                        }
+                    }
+                    // if (cellOffset > 0) {
+                    let table = document.getElementById("board-table");
+                    let cellsContent = table.getElementsByClassName("board-cell-content");
+                    cellsContent[(x * 10) + y].appendChild(draggedItem.item);
+                    // } else {
+                    //     // parent element
+                    //     target.parentElement.appendChild(draggedItem.item);
+                    // }
+                    draggedItem.item.id = newId;
+                    event.preventDefault();
+                }
             }
         }
     }
 
     onDragOver = (event) => {
-        // console.log(event);
+        console.log("---onDragOver---");
+        console.log(event);
         let target = event.target;
         if (target.hasAttribute("data-x") && target.hasAttribute("data-y")) {
             let x = +target.getAttribute("data-x");
@@ -301,24 +385,81 @@ class Board {
                     for (let i = x; i < x + h; i++) {
                         for (let j = y; j < y + w; j++) {
                             if (i >= 0 && i < 10 && j >= 0 && j < 10) {
-                                if (board[i][j] != 0)
+                                if (board[i][j] != 0 && board[i][j] != draggedItem.id)
                                     return
                             } else
                                 return
                         }
                     }
-                    // for (let i = x; i < x + h; i++) {
-                    //     for (let j = y; j < y + w; j++) {
-                    //         if (i >= 0 && i < 10 && j >= 0 && j < 10) {
-                    //             if (board[i][j] != 0)
-                    //                 return
-                    //         } else
-                    //             return
-                    //     }
-                    // }
                     event.preventDefault();
                 }
             }
+        } else if (Array.from(target.classList).some(c => c == "boat-box") && target.id) {
+            console.log("boatbox");
+            let coord = target.id.match(/^b-(\d{2})$/);
+            if (coord && coord.length > 1) {
+                let x = +coord[1][0];
+                let y = +coord[1][1];
+                console.log("init", x, y);
+
+                let positions = this.getPositionsFromBoxId(target.id);
+                let orientation = this.getOrientation(positions);
+                this.orderByXThenY(positions);
+                let offsetDropFromInit = 0;
+                if (orientation == "H") {
+                    let cellSize = target.clientWidth / positions.length;
+                    offsetDropFromInit = event.offsetX / cellSize;
+                } else if (orientation == "V") {
+                    let cellSize = target.clientHeight / positions.length;
+                    offsetDropFromInit = event.offsetY / cellSize;
+                }
+                if (offsetDropFromInit >= positions.length)
+                    offsetDropFromInit = positions.length - 1;
+                else if (offsetDropFromInit < 0) {
+                    offsetDropFromInit = 0;
+                }
+                offsetDropFromInit = Math.trunc(offsetDropFromInit);
+                if (orientation == "H") {
+                    y += offsetDropFromInit;
+                } else if (orientation == "V") {
+                    x += offsetDropFromInit;
+                }
+
+                let board = this.binaryBoard;
+                let draggedElmt = this.getDraggedItem();
+                let draggedItem = draggedElmt.item;
+                let cellOffset = draggedElmt.cellOffset;
+                if (draggedItem) {
+                    let w = +draggedItem.style.width.replace("em", "");
+                    let h = +draggedItem.style.height.replace("em", "");
+                    if (w > 0 && h > 0) {
+                        w = w / 2;
+                        h = h / 2;
+                        console.log(x, y);
+                        if (cellOffset > 0) {
+                            if (w > h) {
+                                // H
+                                y = y - cellOffset;
+                            } else if (w < h) {
+                                // V
+                                x = x - cellOffset;
+                            }
+                        }
+                        console.log(x, y);
+                        for (let i = x; i < x + h; i++) {
+                            for (let j = y; j < y + w; j++) {
+                                if (i >= 0 && i < 10 && j >= 0 && j < 10) {
+                                    if (board[i][j] != 0 && board[i][j] != draggedItem.id)
+                                        return
+                                } else
+                                    return
+                            }
+                        }
+                        event.preventDefault();
+                    }
+                }
+            }
+
         }
     }
 
