@@ -287,3 +287,36 @@ header {
 .board-options>div>button {
     margin-top: 2rem;
 }
+
+
+/* Chat */
+
+#chat-container {
+    width: 75%;
+    margin: 1rem auto 0 auto;
+    padding: 1rem;
+    background-color: rgb(235, 235, 235);
+    /* max-height: 20vh; */
+    position: relative;
+}
+
+#chat-container>#chat-input {
+    width: 100%;
+    position: sticky;
+    top: 0;
+}
+
+#chat-messages-list {
+    overflow: auto;
+    max-height: 200px;
+    margin-top: 0.5rem;
+}
+
+.chat-message {
+    margin: 0.5rem 0;
+    white-space: nowrap;
+}
+
+.chat-message.sent {
+    color: gray;
+}

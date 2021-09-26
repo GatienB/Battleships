@@ -115,6 +115,15 @@ export class SocketManager {
                         // send error
                     }
                 }
+                else if (msg.command === "chat_message" && msg.content && !isNaN(+msg.timestamp) && +msg.timestamp > 0) {
+                    let g = this.cacheManager.getGameBySocket(socket)[0];
+                    if (g) {
+                        let rival = g.GetRival(socket);
+                        if (rival) {
+                            this.sendChatMessage(rival, msg.content, msg.timestamp);
+                        }
+                    }
+                }
                 console.log(data.toString());
             });
 
@@ -164,6 +173,14 @@ export class SocketManager {
                 boat: success == true && boatPositions.length > 0 ? boatPositions : undefined,
                 gameResult: gameResult
             }
+        }));
+    }
+
+    private sendChatMessage(socket: WebSocket, message: string, tmstmp: number) {
+        socket.send(JSON.stringify({
+            command: "chat_message",
+            content: message,
+            timestamp: tmstmp
         }));
     }
 

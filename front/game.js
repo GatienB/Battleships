@@ -7,6 +7,7 @@ class Game {
     isGameStarted = false;
     idGame;
     isIaGame;
+    _socketManager;
     constructor() {
         console.log("Game");
         let div = document.getElementById("play-link");
@@ -32,11 +33,24 @@ class Game {
         board.setSelfWait(true);
         document.getElementById("play-button").setAttribute("disabled", true);
         document.getElementById("play-button").removeEventListener("click", play);
-        document.getElementsByTagName("body")[0].removeChild(document.getElementsByClassName("board-options")[0]);
+        // document.getElementsByTagName("body")[0].removeChild(document.getElementsByClassName("board-options")[0]);
+        document.getElementById("randomize-btn").onclick = null;
+        document.getElementsByClassName("board-options")[0].classList.add("invisible");
         console.log("play");
-        let sManager = new SocketManager(board);
-        board.SetSocketManager(sManager);
-        sManager.wsConnect(this);
+        this._socketManager = new SocketManager(board);
+        board.SetSocketManager(this._socketManager);
+        this._socketManager.wsConnect(this);
+    }
+
+    sendMessage = (msg) => {
+        if (msg && msg.replace(/ /g, "").length > 0) {
+            console.log(`[${msg}]`);
+            msg = msg.substr(0, 250);
+            if (this._socketManager && this.isGameStarted) {
+                var tmstmp = Date.now();
+                this._socketManager.sendMessage(msg, tmstmp);
+            }
+        }
     }
 
     _getRandomInt(min = 0, max = 10000) {
@@ -75,4 +89,15 @@ if (!isIa) {
 let btn = document.getElementById("randomize-btn");
 if (btn) {
     btn.onclick = () => { board.randomizeBoats(); };
+}
+
+function send(event) {
+    if (event && event.keyCode === 13) {
+        let input = document.getElementById("chat-input");
+        if (input && input.value && input.value.replace(/ /g, "").length > 0) {
+            console.log(`[${input.value}]`);
+            game.sendMessage(input.value);
+            input.value = "";
+        }
+    }
 }

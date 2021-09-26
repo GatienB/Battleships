@@ -102,6 +102,11 @@ class SocketManager {
                 this.board.setRivalWait(true);
                 this.closeSocketSilently();
                 break;
+            case "chat_message":
+                if (msg.content && msg.timestamp) {
+                    this.chatMessageReceived(msg.content, +msg.timestamp);
+                }
+                break;
             default:
                 break;
         }
@@ -120,6 +125,10 @@ class SocketManager {
                 boatsStats.forEach(elmt => {
                     elmt.classList.remove("invisible");
                 });
+                if (!this.game.isIaGame) {
+                    let chat = document.getElementById("chat-container");
+                    chat.classList.remove("invisible");
+                }
             }
 
             let boat = undefined;
@@ -179,5 +188,46 @@ class SocketManager {
         let el = document.getElementById("message-text");
         el.parentElement.setAttribute("data-type", dataType);
         el.innerText = message;
+    }
+
+    sendMessage(message, tmstmp) {
+        let msg = {
+            command: "chat_message",
+            content: message,
+            timestamp: tmstmp
+        };
+        this.chatMessageSent(message, tmstmp);
+        if (this.socket) {
+            this.socket.send(JSON.stringify(msg));
+        }
+    }
+
+    chatMessageSent(message, tmstmp) {
+        this.addNewMessage(message, tmstmp, true);
+    }
+
+    chatMessageReceived(message, tmstmp) {
+        this.addNewMessage(message, tmstmp, false);
+    }
+
+    addNewMessage(message, tmstmp, isSent) {
+        let msgList = document.getElementById("chat-messages-list");
+        if (msgList) {
+            let msgElmt = document.createElement("div");
+            msgElmt.classList.add("chat-message");
+            if (isSent) {
+                msgElmt.classList.add("sent");
+            }
+            msgElmt.innerText = this._getFormattedTime(tmstmp) + " - " + message;
+            msgList.prepend(msgElmt);
+        }
+    }
+
+    _getFormattedTime(tmstmp) {
+        let d = new Date(tmstmp);
+        let str = (d.getHours() < 10 ? '0' + d.getHours() : d.getHours()) +
+            ":" + (d.getMinutes() < 10 ? '0' + d.getMinutes() : d.getMinutes()) +
+            ":" + (d.getSeconds() < 10 ? '0' + d.getSeconds() : d.getSeconds());
+        return str;
     }
 }
