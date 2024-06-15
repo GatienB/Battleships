@@ -6,7 +6,8 @@ const { SocketManager } = require("./socket_manager");
 
 const app = express();
 
-const SERVER_ADDR = "http://localhost:3000";
+const PORT = 3000;
+const SERVER_ADDR = `http://localhost:${PORT}`;
 
 let cacheManager = new CacheManager();
 let socketManager = new SocketManager(cacheManager);
@@ -48,8 +49,9 @@ app.use((req, res) => {
     res.send("404");
 });
 
-app.listen(3000, () => {
-    console.log("launched");
+app.listen(PORT, () => {
+    console.log("Server started on port " + PORT);
+    console.log("Server address: " + SERVER_ADDR);
 });
 
 
