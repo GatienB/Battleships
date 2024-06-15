@@ -57,14 +57,14 @@ function getBoardHtml(idGame = 0) {
     let content = fs.readFileSync(path.join(__dirname, "../front/board.html"));
     let contentStr = content.toString();
     let returnStr;
-    const strToReplace = `<span><a>IA</a><a href="/">Ami</a></span>`;
+    const strToReplace = `<span><a>IA</a><a href="/">Friend</a></span>`;
     if (idGame > 0) {
         returnStr = contentStr.replace("<span></span>", `<span>${SERVER_ADDR}/id${idGame}</span>`);
-        returnStr = returnStr.replace(strToReplace, `<span><a href="/">IA</a><a>Ami</a></span>`);
+        returnStr = returnStr.replace(strToReplace, `<span><a href="/">IA</a><a>Friend</a></span>`);
     } else {
         let idGenerated = generateId();
         returnStr = contentStr.replace("<span></span>", `<span>${SERVER_ADDR}/id${idGenerated}</span>`);
-        returnStr = returnStr.replace(strToReplace, `<span><a>IA</a><a href="/id${idGenerated}">Ami</a></span>`);
+        returnStr = returnStr.replace(strToReplace, `<span><a>IA</a><a href="/id${idGenerated}">Friend</a></span>`);
     }
     return returnStr;
 }
