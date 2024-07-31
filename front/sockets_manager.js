@@ -30,7 +30,17 @@ class SocketManager {
     wsConnect(game) {
         this.game = game;
         console.log(this.board.getBinaryBoard());
-        this.socket = new WebSocket("ws://localhost:3001");
+        const host = location.origin.split('//')[1];
+        let url = "ws://localhost:3000";
+        if (!(host.includes("localhost") || host.includes("127.0.0.1"))) {
+            if (location.protocol === "https:") {
+                url = "wss://";
+            } else {
+                url = "ws://";
+            }
+            url = `${url}${host}`;
+        }
+        this.socket = new WebSocket(url);
 
         /*
             Todo

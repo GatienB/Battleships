@@ -2,21 +2,17 @@ import * as WebSocket from "ws";
 import { CacheManager, Game, Position } from "./cache_manager/cacheManager";
 
 export class SocketManager {
-    private port: number = 3001;
     private cacheManager: CacheManager;
     private server: WebSocket.Server;
-    constructor(cacheManager: CacheManager) {
+    constructor(cacheManager: CacheManager, server: WebSocket.Server) {
         this.cacheManager = cacheManager;
-        this.server = this.initServer();
+        this.server = this.initServer(server);
         this.cacheManager.SetSocketManager(this);
     }
 
-    private initServer(): WebSocket.Server {
-        let server = new WebSocket.Server({
-            port: this.port
-        });
-
+    private initServer(server: WebSocket.Server): WebSocket.Server {
         server.on('connection', (socket) => {
+            console.log("New connection");
             this.cacheManager.addNewConnection(socket);
 
             // todo
